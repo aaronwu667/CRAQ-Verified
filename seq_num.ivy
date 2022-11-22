@@ -1,0 +1,31 @@
+#lang ivy1.7
+
+include order
+
+module seq_num = {
+    type t
+    
+    # Total ordering over sequence numbers
+    instantiate total_ord_prop : totally_ordered_with_zero(t)
+    instantiate iter : order_iterator(this)
+
+    action next(seq:t) returns(res:t)
+
+    object spec = {
+	# Each sequence number instance is interpreted as a 64-bit number
+	interpret t -> bv[64]
+	after next {
+	    require exists X.seq < X;
+	    ensure seq < res & (X < res -> X <= seq)
+	}
+    }
+
+    object impl = {
+	implement next(seq:t) returns(res:t) {
+	    # simply increment
+	    res := seq + 1
+	}
+    }
+    
+    isolate seq_num_iso = total_ord_prop,iter,spec,impl
+}

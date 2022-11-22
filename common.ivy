@@ -1,0 +1,36 @@
+#lang ivy1.7
+
+include seq_num
+
+type key
+type value
+instance ver_num : seq_num
+# Another seq_num instance for clarity, might get rid of this later
+instance req_num : seq_num
+# Declaring this as an object makes syntax easier on eyes
+object ver_value = {
+    type this = struct {
+	val : value,
+	vnum : ver_num.t 
+    }
+}
+
+object impl_interp = {
+    interpret key -> bv[64]
+    interpret value -> strlit
+}
+
+# This section needs to be completed later
+type interact = {put, get}
+object request = {
+    type this = struct {
+	t: interact,
+	k: key,
+	id: req_num.t,
+	dat: value,
+	rvnum: ver_num.t
+    }
+}
+alias reply = request
+
+# TBD: additional messages and network decls
