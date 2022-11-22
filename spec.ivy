@@ -29,16 +29,14 @@ isolate spec = {
 	# Service's response to client
 	implement invokeResponse(req: request, repl: reply) {
 	    var checkDat : value;
-	    var checkVnum : ver_num.t;
 	    if req.t = put {
 		checkDat := req.dat;
-		checkVnum := ver_num.next(map(req.k).vnum)
 	    } else {
 		checkDat := map(req.k).val;
-		checkVnum := map(req.k).vnum
-	    }	    
-	    if ~requests(repl) & repl.dat = checkDat & repl.rvnum = checkVnum {
-		if req.t = put {
+	    }
+	    
+	    if ~requests(repl) & repl.dat = checkDat {
+		if req.t = put & ver_num.next(map(req.k).vnum) = repl.rvnum {
 		    # Update map
 		    map(req.k).val := req.dat;
 		    map(req.k).vnum := req.rvnum
