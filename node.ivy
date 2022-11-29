@@ -1,0 +1,55 @@
+#lang ivy1.7
+
+include common
+
+# c.f. bounded_sequence in standard library
+isolate node = {
+    type this
+    alias t = this
+
+    action next(x:t) returns (y:t)
+    action prev(x:t) returns (y:t)
+    action is_tail(x:t) returns (r:bool)
+    function nodeId(X: node) : node
+    relation succ(X:t,Y:t)
+
+    specification {
+	# Configuration should ensure that this axiom is not violated
+	axiom [injectivity] nodeId(X) = nodeId(Y) -> X = Y
+        property N:t >= 0
+	property succ(X,Z) -> (X < Z & ~(X < Y & Y < Z))
+	instantiate totally_ordered(t)
+	before next {
+	    assert exists S. S > x;
+	}
+	after next {
+	    assert x < y & (x < Y -> y <= Y);
+	    assert succ(x,y)
+	}
+	before prev {
+	    assert 0 < x
+	}
+	after prev {
+	    assert y < x & (Y < x -> Y <= y);
+	    assert succ(y,x)
+	}
+	after is_tail {
+	    assert r <-> ~exists S. S > x
+	}
+    }
+
+    implementation {
+	interpret t -> bv[16] # Number of nodes is small
+	definition succ(X,Y) = (Y = X + 1 & X < Y)
+	implement next {
+	    y := x + 1
+	}
+	implement prev {
+	    y := x - 1
+	}
+	implement is_tail {
+	    r := ~(x + 1 > x)
+	}
+    }
+}
+
