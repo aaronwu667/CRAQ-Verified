@@ -1,0 +1,9 @@
+#lang ivy1.7
+
+include spec
+
+isolate system = {
+    object server(me: node) = {
+	function hash(K : key) : ver_value
+    }    
+} with spec, node

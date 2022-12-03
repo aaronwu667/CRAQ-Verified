@@ -1,23 +1,30 @@
 #lang ivy1.7
 
 include seq_num
+include collections
 
 type key
 type value
 instance ver_num : seq_num
-# Another seq_num instance for clarity, might get rid of this later
 instance req_num : seq_num
-
 instance msg_num : seq_num
 
-instance node : iterable 
+instance node : iterable
+
+# Ordered map of version numbers -> values, delete_all to garbage collect 
+object ver_map = {
+    type this
+    instantiate ordered_map(ver_num, value)    
+}
+
 # Declaring this as an object makes syntax easier on eyes
 object ver_value = {
     type this = struct {
-	val : value,
-	vnum : ver_num.t 
+	dBit : bool, # Dirty bit
+	mv : ver_map # multi-versioned store
     }
 }
+
 
 object impl_interp = {
     interpret key -> bv[64]
@@ -45,7 +52,6 @@ object msg = {
 	t: msg_type,
 	src: node,
 	msgnum: msg_num.t, # ordering in message channel between src and dest
-	rvnum: ver_num.t, # version number
 	body: query
     }
 }
