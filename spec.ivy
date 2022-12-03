@@ -5,14 +5,13 @@ include common
 isolate spec = {
     relation requests(R:request_msg)
     relation replies(R:reply_msg)
-    function map(K:key) : ver_value
+    function map(K:key) : value
 
     action invokeResponse(req: request_msg, repl: reply_msg)
     
     after init {
 	# Abstract "default" value
-	map(K: key).val := 0;
-	map(K: key).vnum := 0;
+	map(K: key) := 0;
 	requests(R: request_msg) := false;
 	replies(R: reply_msg) := false
     }
@@ -29,20 +28,16 @@ isolate spec = {
 	# Service's response to client
 	implement invokeResponse(req: request_msg, repl: reply_msg) {
 	    var checkDat : value;
-	    var checkVnum : ver_num.t;
 	    if req.body.qtype = put {
 		checkDat := req.body.qvalue;
-		checkVnum := ver_num.next(map(req.body.qkey).vnum) 
 	    } else {
-		checkDat := map(req.body.qkey).val;
-		checkVnum := repl.rvnum
+		checkDat := map(req.body.qkey);
 	    }
 	    
-	    if ~requests(repl) & (repl.body.qvalue = checkDat) & (repl.rvnum = checkVnum) {
+	    if ~requests(repl) & (repl.body.qvalue = checkDat) {
 		if req.body.qtype = put {
 		    # Update map
-		    map(req.body.qkey).val := req.body.qvalue;
-		    map(req.body.qkey).vnum := req.rvnum	
+		    map(req.body.qkey) := req.body.qvalue;
 		}
 		requests(repl) := true;
 		replies(repl) := true	
