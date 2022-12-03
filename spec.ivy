@@ -10,19 +10,19 @@ isolate spec = {
     action invokeResponse(req: request_msg, repl: reply_msg)
     
     after init {
-		# Abstract "default" value
-		map(K: key).val := 0;
-		map(K: key).vnum := 0;
-		requests(R: request_msg) := false;
-		replies(R: reply_msg) := false
+	# Abstract "default" value
+	map(K: key).val := 0;
+	map(K: key).vnum := 0;
+	requests(R: request_msg) := false;
+	replies(R: reply_msg) := false
     }
 
     specification {
-		before invokeResponse(req: request_msg, repl: reply_msg) {
-			require req.body.qtype = repl.body.qtype;
-			require req.body.qkey = repl.body.qkey;
-			require req.body.qid = repl.body.qid;
-		}
+	before invokeResponse(req: request_msg, repl: reply_msg) {
+	    require req.body.qtype = repl.body.qtype;
+	    require req.body.qkey = repl.body.qkey;
+	    require req.body.qid = repl.body.qid;
+	}
     }
     
     implementation {
@@ -31,11 +31,11 @@ isolate spec = {
 	    var checkDat : value;
 	    var checkVnum : ver_num.t;
 	    if req.body.qtype = put {
-			checkDat := req.body.qvalue;
-			checkVnum := ver_num.next(map(req.body.qkey).vnum) 
+		checkDat := req.body.qvalue;
+		checkVnum := ver_num.next(map(req.body.qkey).vnum) 
 	    } else {
-			checkDat := map(req.body.qkey).val;
-			checkVnum := repl.rvnum
+		checkDat := map(req.body.qkey).val;
+		checkVnum := repl.rvnum
 	    }
 	    
 	    if ~requests(repl) & (repl.body.qvalue = checkDat) & (repl.rvnum = checkVnum) {

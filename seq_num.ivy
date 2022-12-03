@@ -3,8 +3,7 @@
 include order
 
 module seq_num = {
-    type this
-    alias t = this
+    type t
     instantiate total_order : totally_ordered_with_zero(t)
     instantiate iter : order_iterator(this)
 

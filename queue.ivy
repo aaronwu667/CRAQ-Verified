@@ -10,7 +10,7 @@ module message_queue(seqnum) = {
     action enqueue(m: msg)
     action empty returns (res:bool)
     action pick_one returns (res: msg)
-    action delete_all(seq: seqnum)
+    action delete_all(seq: seqnum.t)
 
     export enqueue
     export empty
@@ -42,7 +42,7 @@ module message_queue(seqnum) = {
         after pick_one {
             assert contents(res);
         }
-    
+	
         before delete_all  {
             contents(M) := contents(M) & ~(msg.msgnum(M) <= seq);
         }
