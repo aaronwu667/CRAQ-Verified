@@ -70,7 +70,7 @@ isolate trans = {
             informed(rq, dst) := true;
         }
 
-        before send_reply {
+        before handle_inform {
             assert informed(rq, dst);
             informed(rq, dst) := false;
         }
@@ -221,6 +221,14 @@ isolate trans = {
 	invariant mq(S, D).contents(M) & recv_seq(D, S) <= msg.msgnum(M)
         & msg.t(M) = msg_type.reply -> replied(msg.body(M), D)
 
+
+	invariant mq(S, D).contents(M) & recv_seq(D, S) <= msg.msgnum(M)
+        & msg.t(M) = msg_type.inquire -> inquired(msg.body(M), D)
+
+
+	invariant mq(S, D).contents(M) & recv_seq(D, S) <= msg.msgnum(M)
+        & msg.t(M) = msg_type.inform -> informed(msg.body(M), D)
+
 	# # If I have a delegate message for D enqueued and if its sequence number is
 	# # >= D's receive sequence number, then the message is pending.
 
@@ -241,6 +249,18 @@ isolate trans = {
         & mq(S2, D).contents(M2) & recv_seq(D, S2) <= msg.msgnum(M2)
         & (S1 ~= S2 | msg.msgnum(M1) ~= msg.msgnum(M2))
         & msg.t(M1) = msg_type.reply & msg.t(M2) = msg_type.reply
+        -> msg.body(M1) ~= msg.body(M2)
+
+	invariant mq(S1, D).contents(M1) & recv_seq(D, S1) <= msg.msgnum(M1)
+        & mq(S2, D).contents(M2) & recv_seq(D, S2) <= msg.msgnum(M2)
+        & (S1 ~= S2 | msg.msgnum(M1) ~= msg.msgnum(M2))
+        & msg.t(M1) = msg_type.inquire & msg.t(M2) = msg_type.inquire
+        -> msg.body(M1) ~= msg.body(M2)
+
+	invariant mq(S1, D).contents(M1) & recv_seq(D, S1) <= msg.msgnum(M1)
+        & mq(S2, D).contents(M2) & recv_seq(D, S2) <= msg.msgnum(M2)
+        & (S1 ~= S2 | msg.msgnum(M1) ~= msg.msgnum(M2))
+        & msg.t(M1) = msg_type.inform & msg.t(M2) = msg_type.inform
         -> msg.body(M1) ~= msg.body(M2)
 
 	# # A given delegation cannot occur twice in the network
