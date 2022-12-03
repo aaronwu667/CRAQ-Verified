@@ -7,6 +7,9 @@ type value
 instance ver_num : seq_num
 # Another seq_num instance for clarity, might get rid of this later
 instance req_num : seq_num
+
+instance msg_num : seq_num
+
 instance node : iterable 
 # Declaring this as an object makes syntax easier on eyes
 object ver_value = {
@@ -21,18 +24,33 @@ object impl_interp = {
     interpret value -> strlit
 }
 
-# This section needs to be completed later
-type interact = {put, get}
-object request = {
+type query_type = {put, get}
+
+object query = {
     type this = struct {
-	t: interact,
-	k: key,
-	id: req_num.t,
-	dat: value,
-	rvnum: ver_num.t
+        qid : req_num.t, # used to uniquely identify the query
+        qkey : key,
+        qtype : query_type,
+        qvalue : value
     }
 }
-alias reply = request
 
+# This section needs to be completed later
+object msg_type = {
+    type this = {request, reply, inquire, inform, ack}
+}
+# type msg_type = {request, reply, inquire, inform, ack}
+object msg = {
+    type this = struct {
+	t: msg_type,
+	src: node,
+	msgnum: msg_num.t, # ordering in message channel between src and dest
+	rvnum: ver_num.t, # version number
+	body: query
+    }
+}
+
+alias request_msg = msg
+alias reply_msg = msg
 
 # TBD: additional messages and network decls

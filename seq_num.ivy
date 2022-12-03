@@ -3,7 +3,8 @@
 include order
 
 module seq_num = {
-    type t
+    type this
+    alias t = this
     instantiate total_order : totally_ordered_with_zero(t)
     instantiate iter : order_iterator(this)
 
@@ -14,7 +15,7 @@ module seq_num = {
 	    require exists X.seq < X;
 	    ensure seq < res & (X < res -> X <= seq)
 	}
-    } 
+    }
 
     object impl = {
 	# Each sequence number instance is interpreted as a 64-bit number

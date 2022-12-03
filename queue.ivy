@@ -1,0 +1,75 @@
+#lang ivy1.7
+
+include common
+include collections
+
+module message_queue(seqnum) = {
+
+    relation contents(M:msg)
+
+    action enqueue(m: msg)
+    action empty returns (res:bool)
+    action pick_one returns (res: msg)
+    action delete_all(seq: seqnum)
+
+    export enqueue
+    export empty
+    export pick_one
+    export delete_all
+
+    specification {
+        after init {
+            contents(M) := false;
+        }
+
+        before enqueue {
+            assert contents(X) -> msg.msgnum(X) ~= m.msgnum;
+        }
+
+        after enqueue {
+            contents(m) := true;
+        }
+
+        after empty returns (res:bool) {
+            assert contents(M) -> ~res;
+            assert ~res -> exists M. contents(M)
+        }
+
+        before pick_one {
+            assert exists M. contents(M);
+        }
+
+        after pick_one {
+            assert contents(res);
+        }
+    
+        before delete_all  {
+            contents(M) := contents(M) & ~(msg.msgnum(M) <= seq);
+        }
+    }
+    
+    implementation {
+
+        instance imap : ordered_map(seqnum, msg)
+
+        implement enqueue {
+            call imap.set(msg.msgnum(m), m);
+        }
+
+        implement empty {
+            res := seqnum.iter.is_end(imap.lub(seqnum.iter.create(0)));
+        }
+        
+        implement delete_all {
+            call imap.erase(seqnum.iter.create(0), seqnum.iter.create(seqnum.next(seq)))
+        }
+
+        implement pick_one {
+            res := imap.get(seqnum.iter.val(imap.lub(seqnum.iter.create(0))), res);
+        }
+
+        invariant imap.maps(X,Y) -> X = msg.msgnum(Y)
+        invariant contents(Y) <-> imap.maps(msg.msgnum(Y),Y)
+    }
+    isolate iso = this with imap, seqnum
+}

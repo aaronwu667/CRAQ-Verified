@@ -1,0 +1,294 @@
+#lang ivy1.7
+
+include queue
+include common
+include timeout
+include tcp
+
+instance net : simple_tcp(node, msg)
+
+isolate trans = {
+
+    action send_request(src: node, dst: node, rq: query)
+    action send_reply(src:node, dst:node, rq: query)
+    action send_inquire(src:node, dst:node, rq: query)
+    action send_inform(src:node, dst:node, rq: query)
+    # action send_delegate(src: node, dst: node, k: key, v: value)
+
+    action handle_request(dst: node, rq: query)
+    action handle_reply(dst: node, rq: query)
+    action handle_inquire(dst: node, rq: query)
+    action handle_inform(dst: node, rq: query)
+    # action handle_delegate(dst: node, k: key, v: value)
+
+    specification {
+        relation requested(R: query, N: node)
+        relation replied(R: query, N: node)
+        relation inquired(R: query, N: node)
+        relation informed(R: query, N: node)
+        # relation delegated(K: key, V: value, N: node)
+
+        after init {
+            requested(R, N) := false;
+            replied(R, N) := false;
+            inquired(R, N) := false;
+            informed(R, N) := false;
+            # delegated(K, V, N) := false;
+        }
+
+        before send_request {
+            assert ~requested(rq, dst);
+            requested(rq, dst) := true;
+        }
+
+        before handle_request {
+            assert requested(rq, dst);
+            requested(rq, dst) := false;
+        }
+
+        before send_reply {
+            assert ~replied(rq, dst);
+            replied(rq, dst) := true;
+        }
+
+        before handle_reply {
+            assert replied(rq, dst);
+        }
+
+        before send_inquire {
+            assert ~inquired(rq, dst);
+            inquired(rq, dst) := true;
+        }
+
+        before handle_inquire {
+            assert inquired(rq, dst);
+            inquired(rq, dst) := false;
+        }
+
+        before send_inform {
+            assert ~informed(rq, dst);
+            informed(rq, dst) := true;
+        }
+
+        before send_reply {
+            assert informed(rq, dst);
+            informed(rq, dst) := false;
+        }
+    
+        # before send_delegate {
+        #     assert ~delegated(k, v, dst);
+        #     delegated(k, v, dst) := true;
+        # }
+
+        # before handle_delegate {
+        #     assert delegated(k, v, dst);
+        #     delegated(k, v, dst) := false;
+        # }
+    }
+
+    # these type describe the format of messages
+
+implementation {
+
+# Create one outgoing message queue for each host and a timout for each queue.
+        instance mq(S: node, D: node) : message_queue(msg_num)
+        instance timer(S: node, D: node) : timeout_sec
+
+# Keep track of the latest sequence number sent and received on each channel.
+
+        individual send_seq(S: node, D: node) : msg_num
+        individual recv_seq(S: node, D: node) : msg_num
+    
+        after init {
+            recv_seq(S, D) := 0;
+            send_seq(S, D) := 0;
+        }
+
+# Implementations of interface actions
+        implement send_request(src: node, dst: node, rq: query) {
+            var m: msg;
+            m.t := msg_type.request;
+            m.src := src;
+            m.msgnum := send_seq(src, dst);
+            m.rvnum := 0; # meaningless value for a send request
+            m.body := rq;
+            send_seq(src, dst) := send_seq(src, dst).next;
+            call mq(src, dst).enqueue(m);
+            call net.send(src, dst, m);
+        }
+
+        # implement send_delegate(src: node, dst: node, k: key, v: value) {
+        #     var m : msg;
+        #     m.m_kind := msg_kind.delegate_t;
+        #     m.src := src;
+        #     m.rq.rkey := k;
+        #     m.rq.rdata := v;
+        #     m.num := send_seq(src, dst);
+        #     send_seq(src, dst) := send_seq(src, dst).next;
+        #     call mq(src, dst).enqueue(m);
+        #     call net.send(src, dst, m);
+        # }
+
+        implement send_reply(src: node, dst: node, rq:query) {
+            var m: msg;
+            m.t := msg_type.reply;
+            m.src := src;
+            m.msgnum := send_seq(src, dst);
+            m.rvnum := 0; # meaningless value for a send request
+            m.body := rq;
+            send_seq(src, dst) := send_seq(src, dst).next;
+            call mq(src, dst).enqueue(m);
+            call net.send(src, dst, m);
+        }
+
+        implement send_inquire(src: node, dst: node, rq: query) {
+            var m: msg;
+            m.t := msg_type.inquire;
+            m.src := src;
+            m.msgnum := send_seq(src, dst);
+            m.rvnum := 0; # meaningless value for a send request
+            m.body := rq;
+            send_seq(src, dst) := send_seq(src, dst).next;
+            call mq(src, dst).enqueue(m);
+            call net.send(src, dst, m);
+        }
+
+        implement send_inform(src: node, dst: node, rq: query) {
+            var m: msg;
+            m.t := msg_type.inform;
+            m.src := src;
+            m.msgnum := send_seq(src, dst);
+            m.rvnum := 0; # meaningless value for a send request
+            m.body := rq;
+            send_seq(src, dst) := send_seq(src, dst).next;
+            call mq(src, dst).enqueue(m);
+            call net.send(src, dst, m);
+        }
+
+# Receiving a message is the most complicated. First, we send
+# an ack. Then, if the sequence number is correct, we call the
+# application layer action determined by the message type.
+        implement net.recv(dst: node, m:msg) {
+            var seq := m.msgnum;
+            var src := m.src;
+            if seq <= recv_seq(dst, src) & m.t ~= msg_type.ack {
+                var ack : msg;
+                ack.t := msg_type.ack;
+                ack.src := dst;
+                ack.msgnum := seq;
+                call net.send(dst, src, ack);
+            };
+            if m.t = msg_type.ack {
+                call mq(dst, src).delete_all(seq);
+            } else if seq = recv_seq(dst, src) {
+                recv_seq(dst, src) := recv_seq(dst, src).next;
+                if m.t = msg_type.request {
+                    call handle_request(dst, m.body);
+                }
+                else if m.t = msg_type.reply {
+                    call handle_reply(dst, m.body);
+                }
+                else if m.t = msg_type.inquire {
+                    call handle_inquire(dst, m.body);
+                }
+                else if m.t = msg_type.inform {
+                    call handle_inform(dst, m.body);
+                }
+                # else if m.m_kind = msg_kind.delegate_t {
+                #     call handle_delegate(dst, m.rq.rkey, m.rq.rdata);
+                # }
+            }
+        }
+
+# If an outgoing channel times out and the queue is not empty,
+# we pick an arbitrary message in the queue and retransmit it.
+
+        implement timer.timeout(src: node, dst: node) {
+            if ~mq(src, dst).empty {
+                call net.send(src, dst, mq(src, dst).pick_one);
+            }
+        }
+
+# If I have a request message for D enqueued and if its sequence number is
+# >= D's receive sequence number, then the message is pending.
+
+    invariant mq(S, D).contents(M) & recv_seq(D, S) <= msg.msgnum(M)
+        & msg.t(M) = msg_type.request -> requested(msg.body(M), D)
+
+# If I have a reply message for D enqueued and if its sequence number is
+# >= D's receive sequence number, then the message is pending.
+
+    invariant mq(S, D).contents(M) & recv_seq(D, S) <= msg.msgnum(M)
+        & msg.t(M) = msg_type.reply -> replied(msg.body(M), D)
+
+# # If I have a delegate message for D enqueued and if its sequence number is
+# # >= D's receive sequence number, then the message is pending.
+
+#     invariant mq(S, D).contents(M) & recv_seq(D, S) <= msg.num(M)
+#         & msg.m_kind(M) = msg_kind.delegate_t -> delegated(msg.rq(M).rkey, msg.rq(M).rdata, D)
+
+# A given request cannot occur twice in the network
+
+    invariant mq(S1, D).contents(M1) & recv_seq(D, S1) <= msg.msgnum(M1)
+            & mq(S2, D).contents(M2) & recv_seq(D, S2) <= msg.msgnum(M2)
+            & (S1 ~= S2 | msg.msgnum(M1) ~= msg.msgnum(M2))
+            & msg.t(M1) = msg_type.request & msg.t(M2) = msg_type.request 
+        -> msg.body(M1) ~= msg.body(M2)
+
+# A given reply cannot occur twice in the network
+
+    invariant mq(S1, D).contents(M1) & recv_seq(D, S1) <= msg.msgnum(M1)
+            & mq(S2, D).contents(M2) & recv_seq(D, S2) <= msg.msgnum(M2)
+            & (S1 ~= S2 | msg.msgnum(M1) ~= msg.msgnum(M2))
+            & msg.t(M1) = msg_type.reply & msg.t(M2) = msg_type.reply
+        -> msg.body(M1) ~= msg.body(M2)
+
+# # A given delegation cannot occur twice in the network
+
+#     invariant mq(S1, D).contents(M1) & recv_seq(D, S1) <= msg.num(M1)
+#             & mq(S2, D).contents(M2) & recv_seq(D, S2) <= msg.num(M2)
+#             & (S1 ~= S2 | msg.num(M1) ~= msg.num(M2))
+#             & msg.m_kind(M1) = msg_kind.delegate_t & msg.m_kind(M2) = msg_kind.delegate_t
+#         -> (msg.rq(M1).rkey ~= msg.rq(M2).rkey | msg.rq(M1).rdata ~= msg.rq(M2).rdata)
+
+# The sending seq number is greater than any queue entry
+
+    invariant mq(S, D).contents(M) -> send_seq(S, D) > msg.msgnum(M)
+
+# No two messages in a queue have the same sequence number
+
+    invariant mq(S, D).contents(M1) & mq(S, D).contents(M2) & M1 ~= M2
+        -> msg.msgnum(M1) ~= msg.msgnum(M2)
+
+# A sent non-ack message must match any message queue entry with the same
+# sequence number
+
+    invariant net.sent(M, D) & msg.src(M) = S
+        & mq(S, D).contents(M2) & msg.msgnum(M2) = msg.msgnum(M)
+        & msg.t(M) ~= msg_type.ack -> M = M2
+
+# Following added due to counterexamples
+
+# A sent non-ack message with seq num >= receiver must be in the
+# corresponding queue
+
+    invariant net.sent(M, D) & msg.src(M) = S
+        & recv_seq(D, S) <= msg.msgnum(M) & msg.t(M) ~= msg_type.ack
+        -> mq(S, D).contents(M)
+
+# If an ack is sent, the receiving msg_num must be greater
+
+    invariant net.sent(M, D) & msg.src(M) = S
+        & msg.t(M) = msg_type.ack -> recv_seq(S, D) > msg.msgnum(M)
+
+# The sending seq number is greater than non-ack sent message
+
+    invariant net.sent(M, D) & msg.src(M) = S & msg.t(M) ~= msg_type.ack
+        -> send_seq(S, D) > msg.msgnum(M)
+
+# A message in the queue has correct src and is not ack
+
+    invariant mq(S, D).contents(M) -> msg.src(M) = S & msg.t(M) ~= msg_type.ack
+    
+    }
+} with msg_num, net

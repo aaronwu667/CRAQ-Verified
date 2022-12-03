@@ -3,48 +3,46 @@
 include common
 
 isolate spec = {
-    relation requests(R:request)
-    relation replies(R:reply)
+    relation requests(R:request_msg)
+    relation replies(R:reply_msg)
     function map(K:key) : ver_value
 
-    action invokeResponse(req: request, repl: reply)
+    action invokeResponse(req: request_msg, repl: reply_msg)
     
     after init {
-	# Abstract "default" value
-	map(K: key).val := 0;
-	map(K: key).vnum := 0;
-	requests(R: request) := false;
-	replies(R: reply) := false
+		# Abstract "default" value
+		map(K: key).val := 0;
+		map(K: key).vnum := 0;
+		requests(R: request_msg) := false;
+		replies(R: reply_msg) := false
     }
 
     specification {
-	before invokeResponse(req: request, repl: reply) {
-	    require req.t = repl.t;
-	    require req.k = repl.k;
-	    require req.id = repl.id;
-	}
+		before invokeResponse(req: request_msg, repl: reply_msg) {
+			require req.body.qtype = repl.body.qtype;
+			require req.body.qkey = repl.body.qkey;
+			require req.body.qid = repl.body.qid;
+		}
     }
     
     implementation {
 	# Service's response to client
-	implement invokeResponse(req: request, repl: reply) {
+	implement invokeResponse(req: request_msg, repl: reply_msg) {
 	    var checkDat : value;
 	    var checkVnum : ver_num.t;
-	    if req.t = put {
-		checkDat := req.dat;
-		checkVnum := ver_num.next(map(req.k).vnum) 
+	    if req.body.qtype = put {
+			checkDat := req.body.qvalue;
+			checkVnum := ver_num.next(map(req.body.qkey).vnum) 
 	    } else {
-		checkDat := map(req.k).val;
-		checkVnum := repl.rvnum
+			checkDat := map(req.body.qkey).val;
+			checkVnum := repl.rvnum
 	    }
 	    
-	    if ~requests(repl)
-	    & repl.dat = checkDat
-	    & repl.rvnum = checkVnum {
-		if req.t = put {
+	    if ~requests(repl) & (repl.body.qvalue = checkDat) & (repl.rvnum = checkVnum) {
+		if req.body.qtype = put {
 		    # Update map
-		    map(req.k).val := req.dat;
-		    map(req.k).vnum := req.rvnum	
+		    map(req.body.qkey).val := req.body.qvalue;
+		    map(req.body.qkey).vnum := req.rvnum	
 		}
 		requests(repl) := true;
 		replies(repl) := true	
