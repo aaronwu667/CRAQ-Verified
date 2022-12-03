@@ -11,7 +11,7 @@ module seq_num = {
 
     object spec = {
 	after next {
-	    require exists X.seq < X;
+	    assume exists X.seq < X; # will not overflow in lifetime of universe
 	    ensure seq < res & (X < res -> X <= seq)
 	}
     }
