@@ -2,6 +2,7 @@
 
 include seq_num
 include collections
+include pair
 
 type key
 type value
@@ -11,20 +12,9 @@ instance msg_num : seq_num
 
 instance node : iterable
 
-# Ordered map of version numbers -> values, delete_all to garbage collect 
-object ver_map = {
-    type this
-    instantiate ordered_map(ver_num, value)    
-}
-
-# Declaring this as an object makes syntax easier on eyes
-object ver_value = {
-    type this = struct {
-	dBit : bool, # Dirty bit
-	mv : ver_map # multi-versioned store
-    }
-}
-
+# Likely not possible to have key |-> (dBit, ordered_map) in ivy
+# Flatten and have ordered map (key, ver_num) |-> value and function key |-> dBit
+instance key_tups : pair(key, ver_num.t)
 
 object impl_interp = {
     interpret key -> bv[64]

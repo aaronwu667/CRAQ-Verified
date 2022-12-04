@@ -4,6 +4,11 @@ include spec
 
 isolate system = {
     object server(me: node) = {
-	function hash(K : key) : ver_value
+	function dBitMap(K: key) : bool
+	instance mvMap : ordered_map(key_tups, value)
+	
+	after init {	    
+	    dBitMap(K) := false
+	}
     }    
-} with spec, node
+} with spec, node, key_tups
