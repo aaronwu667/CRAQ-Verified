@@ -32,12 +32,12 @@ isolate spec = {
 		checkDat := req.body.qvalue;
 	    } else {
 		checkDat := map(req.body.qkey);
-	    };	    
+	    }	    
 	    if ~requests(repl) & repl.body.qvalue = checkDat {
 		if req.body.qtype = put {
 		    # Update map
 		    map(req.body.qkey) := req.body.qvalue;
-		};
+		}
 		requests(repl) := true;
 		replies(repl) := true	
 	    }
