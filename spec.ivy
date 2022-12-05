@@ -3,40 +3,40 @@
 include common
 
 isolate spec = {
-    relation requests(R:request_msg)
-    relation replies(R:reply_msg)
+    relation requests(R:request_query)
+    relation replies(R:reply_query)
     function map(K:key) : value
 
-    action invokeResponse(req: request_msg, repl: reply_msg)
+    action commit(req: request_query, repl: reply_query)
     
     after init {
 	# Abstract "default" value
 	map(K: key) := 0;
-	requests(R: request_msg) := false;
-	replies(R: reply_msg) := false
+	requests(R: request_query) := false;
+	replies(R: reply_query) := false
     }
 
     specification {
-	before invokeResponse(req: request_msg, repl: reply_msg) {
-	    require req.body.qtype = repl.body.qtype;
-	    require req.body.qkey = repl.body.qkey;
-	    require req.body.qid = repl.body.qid;
+	before commit(req: request_query, repl: reply_query) {
+	    require req.qtype = repl.qtype;
+	    require req.qkey = repl.qkey;
+	    require req.qid = repl.qid;
 	}
     }
     
     implementation {
 	# Service's response to client
-	implement invokeResponse(req: request_msg, repl: reply_msg) {
+	implement commit(req: request_query, repl: reply_query) {
 	    var checkDat : value;
-	    if req.body.qtype = put {
-		checkDat := req.body.qvalue;
+	    if req.qtype = put {
+		checkDat := req.qvalue;
 	    } else {
-		checkDat := map(req.body.qkey);
-	    }	    
-	    if ~requests(repl) & repl.body.qvalue = checkDat {
-		if req.body.qtype = put {
+		checkDat := map(req.qkey);
+		}
+	    if ~requests(repl) & repl.qvalue = checkDat {
+		if req.qtype = put {
 		    # Update map
-		    map(req.body.qkey) := req.body.qvalue;
+		    map(req.qkey) := req.qvalue;
 		}
 		requests(repl) := true;
 		replies(repl) := true	

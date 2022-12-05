@@ -28,7 +28,9 @@ object query = {
         qid : req_num.t, # used to uniquely identify the query
         qkey : key,
         qtype : query_type,
-        qvalue : value
+        qvalue : value,
+        qsrc: node,
+        qvnum: ver_num.t # version number
     }
 }
 
@@ -46,7 +48,7 @@ object msg = {
     }
 }
 
-alias request_msg = msg
-alias reply_msg = msg
+alias request_query = query
+alias reply_query = query
 
 # TBD: additional messages and network decls

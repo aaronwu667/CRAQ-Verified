@@ -110,7 +110,6 @@ isolate trans = {
             m.t := msg_type.request;
             m.src := src;
             m.msgnum := send_seq(src, dst);
-            m.rvnum := 0; # meaningless value for a send request
             m.body := rq;
             send_seq(src, dst) := send_seq(src, dst).next;
             call mq(src, dst).enqueue(m);
@@ -134,7 +133,6 @@ isolate trans = {
             m.t := msg_type.reply;
             m.src := src;
             m.msgnum := send_seq(src, dst);
-            m.rvnum := 0; # meaningless value for a send request
             m.body := rq;
             send_seq(src, dst) := send_seq(src, dst).next;
             call mq(src, dst).enqueue(m);
@@ -146,7 +144,6 @@ isolate trans = {
             m.t := msg_type.inquire;
             m.src := src;
             m.msgnum := send_seq(src, dst);
-            m.rvnum := 0; # meaningless value for a send request
             m.body := rq;
             send_seq(src, dst) := send_seq(src, dst).next;
             call mq(src, dst).enqueue(m);
@@ -158,7 +155,6 @@ isolate trans = {
             m.t := msg_type.inform;
             m.src := src;
             m.msgnum := send_seq(src, dst);
-            m.rvnum := 0; # meaningless value for a send request
             m.body := rq;
             send_seq(src, dst) := send_seq(src, dst).next;
             call mq(src, dst).enqueue(m);

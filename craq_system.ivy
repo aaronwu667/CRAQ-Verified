@@ -1,14 +1,72 @@
 #lang ivy1.7
 
 include spec
+include trans
 
 isolate system = {
-    object server(me: node) = {
+    object server(self: node) = {
 	function dBitMap(K: key) : bool
 	instance mvMap : ordered_map(key_tups, value)
+    individual req_no: req_num.t
+    individual ver_no: ver_num.t
+
+    action set(k: key, d: value)
+    action get(k:key)
+
+    import action answer(k: key, v: value, id: req_num.t)
 	
-	after init {	    
+	after init {
 	    dBitMap(K) := false
 	}
+
+    implement set(k: key, v: value) {
+        var q: query;
+        q.qid := req_no;
+        q.qtype := put;
+        q.qkey := k;
+        q.qvalue := v;
+        q.qsrc := self;
+        q.qvnum := 0;
+
+        req_no := req_no.next;
+
+        if self = 0 {
+            ver_no := ver_no.next;
+            q.qvnum := ver_no;
+
+            var key_pair : key_tups.t;
+            key_pair.x := k;
+            key_pair.y := ver_no;
+            mvMap.set(key_pair, v);
+
+            var next_node : node;
+            next_node := self.next;
+
+            call trans.send_request(self, next_node, q);
+            # call spec.commit(q, q);
+            # call trans.send_reply(self, r.src, q);
+        } else {
+            call trans.send_request(self, 0, q);
+        };
+    }
+    
+    # implement get(k:key) {
+    #     var r: req;
+    #     r.src := self;
+    #     r.rid := req_no;
+    #     r.rtype := read;
+    #     r.rkey := k;
+    #     req_no := req_no.next;
+
+    #     var owner := dm.get(k);
+    #     if owner = self {
+    #         var rep := r;
+    #         rep.rdata := hash(k);
+    #         call spec.commit(r, rep);
+    #         call trans.send_reply(self, r.src, rep);
+    #     } else {
+    #         call trans.send_request(self, owner, r);
+    #     };
+    # }
     }    
-} with spec, node, key_tups
+} with spec, trans, node, key_tups
