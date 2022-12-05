@@ -21,7 +21,7 @@ object impl_interp = {
     interpret value -> strlit
 }
 
-type query_type = {put, get}
+type query_type = {read, write}
 
 object query = {
     type this = struct {

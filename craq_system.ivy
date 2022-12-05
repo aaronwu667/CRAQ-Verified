@@ -6,6 +6,7 @@ include trans
 isolate system = {
     object server(self: node) = {
 	function dBitMap(K: key) : bool
+	function highestVersion(K: key) : ver_num.t
 	instance mvMap : ordered_map(key_tups, value)
 	individual req_no: req_num.t
 	individual ver_no: ver_num.t
@@ -16,17 +17,18 @@ isolate system = {
 	import action answer(k: key, v: value, id: req_num.t)
 	
 	after init {
-	    dBitMap(K) := false
+	    dBitMap(K) := false;
+		highestVersion(K) := 0
 	}
 
 	implement set(k: key, v: value) {
             var q: query;
             q.qid := req_no;
-            q.qtype := put;
+            q.qtype := read;
             q.qkey := k;
             q.qvalue := v;
             q.qsrc := self;
-            q.qvnum := 0;
+            q.qvnum := 0; # unused
 
             req_no := req_no.next;
 
@@ -39,34 +41,51 @@ isolate system = {
 		key_pair.y := ver_no;
 		mvMap.set(key_pair, v);
 
+		dBitMap(k) := true;
+		highestVersion(k) := ver_no;
+
 		var next_node : node;
 		next_node := self.next;
 
 		call trans.send_request(self, next_node, q);
-		# call spec.commit(q, q);
-		# call trans.send_reply(self, r.src, q);
             } else {
 		call trans.send_request(self, 0, q);
             }
 	}
-	
-	# implement get(k:key) {
-	    #     var r: req;
-	    #     r.src := self;
-	    #     r.rid := req_no;
-	    #     r.rtype := read;
-	    #     r.rkey := k;
-	    #     req_no := req_no.next;
 
-	    #     var owner := dm.get(k);
-	    #     if owner = self {
-		#         var rep := r;
-		#         rep.rdata := hash(k);
-		#         call spec.commit(r, rep);
-		#         call trans.send_reply(self, r.src, rep);
-		#     } else {
-		#         call trans.send_request(self, owner, r);
-		#     };
-	    # }
+    implement get(k:key) {
+        var q: query;
+        q.qid := req_no;
+        q.qkey := k;
+        q.qtype := write;
+        q.qvalue := 0; # unused
+        q.qsrc := self;
+
+        req_no := req_no.next;
+
+        if dBitMap(k) {
+			var rep := q;
+
+			var key_pair : key_tups.t;
+			key_pair.x := k;
+			key_pair.y := highestVersion(k);
+
+			# 0 is the default value
+			rep.qvalue := mvMap.get(key_pair, 0);
+
+			call spec.commit(q, rep);
+
+			# This may need to be changed if we want to
+			# send reply to the node that received the client message
+            call trans.send_reply(self, self, rep);
+        } else {
+            # Send inquire message to tail
+            call trans.send_inquire(self, node.max, q);
+        };
+    }
+
+	    implement trans.handle_reply(q: query) {
+            call answer(q.qkey, q.qvalue, q.qid);
+        }
     }    
 } with spec, trans, node, key_tups
