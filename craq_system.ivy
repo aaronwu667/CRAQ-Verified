@@ -12,6 +12,7 @@ isolate system = {
 
 	action set(k: key, d: value)
 	action get(k:key)
+	action tail_commit(rq: query)
 
 	import action answer(k: key, v: value)
 	
@@ -27,20 +28,23 @@ isolate system = {
             q.qvalue := v;
             q.qsrc := self;
 	    
-
-            if self = 0 {
+	    
+            if self = 0:node {
 		ver_no := ver_no.next;
 		q.qvnum := ver_no;
-
+		
 		var key_pair : key_tups.t;
 		key_pair.x := k;
 		key_pair.y := ver_no;
 		mvMap.set(key_pair, v);
-
+		
 		dBitMap(k) := true;
 		highestVersion(k) := ver_no;
-
-		call trans.send_request(self, self.next, q);
+		if ~(self = node.max) {
+		    call trans.send_request(self, self.next, q);
+		} else {
+		    call tail_commit(q)
+		}
             } else {
 		call trans.send_request(self, 0, q);
             }
@@ -48,9 +52,9 @@ isolate system = {
 
 	implement trans.handle_request(rq: query) {
 	    # assert rq.qtype = write
-	    if self = 0 {
+	    if self = 0:node {
 		call set(rq.qkey, rq.qvalue)
-	    } else { 
+	    } else if ~(self = node.max) { 
 		var key_pair : key_tups.t;
 		key_pair.x := rq.qkey;
 		key_pair.y := rq.qvnum;
@@ -65,7 +69,14 @@ isolate system = {
 		
 		# Forward query
 		call trans.send_request(self, self.next, rq)
+	    } else {
+		# if tail
+		call tail_commit(rq: query)
 	    }
+	}
+
+	implement tail_commit(rq: query) {
+	    # Tofis
 	}
 	
 	implement get(k:key) {
