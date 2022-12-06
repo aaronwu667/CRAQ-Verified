@@ -7,7 +7,6 @@ include pair
 type key
 type value
 instance ver_num : seq_num
-instance req_num : seq_num
 instance msg_num : seq_num
 
 instance node : iterable
@@ -25,7 +24,6 @@ type query_type = {read, write}
 
 object query = {
     type this = struct {
-        qid : req_num.t, # used to uniquely identify the query
         qkey : key,
         qtype : query_type,
         qvalue : value,

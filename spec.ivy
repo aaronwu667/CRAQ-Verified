@@ -20,7 +20,6 @@ isolate spec = {
 	before commit(req: request_query, repl: reply_query) {
 	    require req.qtype = repl.qtype;
 	    require req.qkey = repl.qkey;
-	    require req.qid = repl.qid;
 	}
     }
     

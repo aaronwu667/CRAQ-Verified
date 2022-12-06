@@ -8,29 +8,25 @@ isolate system = {
 	function dBitMap(K: key) : bool
 	function highestVersion(K: key) : ver_num.t
 	instance mvMap : ordered_map(key_tups, value)
-	individual req_no: req_num.t
 	individual ver_no: ver_num.t
 
 	action set(k: key, d: value)
 	action get(k:key)
 
-	import action answer(k: key, v: value, id: req_num.t)
+	import action answer(k: key, v: value)
 	
 	after init {
 	    dBitMap(K) := false;
-		highestVersion(K) := 0
+	    highestVersion(K) := 0
 	}
 
 	implement set(k: key, v: value) {
             var q: query;
-            q.qid := req_no;
-            q.qtype := read;
+            q.qtype := write;
             q.qkey := k;
             q.qvalue := v;
             q.qsrc := self;
-            q.qvnum := 0; # unused
-
-            req_no := req_no.next;
+	    
 
             if self = 0 {
 		ver_no := ver_no.next;
@@ -44,48 +40,60 @@ isolate system = {
 		dBitMap(k) := true;
 		highestVersion(k) := ver_no;
 
-		var next_node : node;
-		next_node := self.next;
-
-		call trans.send_request(self, next_node, q);
+		call trans.send_request(self, self.next, q);
             } else {
 		call trans.send_request(self, 0, q);
             }
 	}
 
-    implement get(k:key) {
-        var q: query;
-        q.qid := req_no;
-        q.qkey := k;
-        q.qtype := write;
-        q.qvalue := 0; # unused
-        q.qsrc := self;
+	implement trans.handle_request(rq: query) {
+	    # assert rq.qtype = write
+	    if self = 0 {
+		call set(rq.qkey, rq.qvalue)
+	    } else { 
+		var key_pair : key_tups.t;
+		key_pair.x := rq.qkey;
+		key_pair.y := rq.qvnum;
 
-        req_no := req_no.next;
+		mvMap.set(key_pair, rq.qvalue);
+		
+		# Update dirty bit map
+		dBitMap(rq.qkey) := true;
+		
+		# Safe because network messages delivered in-order
+		highestVersion(rq.qkey) := rq.qvnum;
+		
+		# Forward query
+		call trans.send_request(self, self.next, rq)
+	    }
+	}
+	
+	implement get(k:key) {
+            var q: query;
+            q.qkey := k;
+            q.qtype := read;
+            q.qsrc := self;
 
-        if dBitMap(k) {
-			var rep := q;
+            if ~dBitMap(k) {
+		var rep := q;
 
-			var key_pair : key_tups.t;
-			key_pair.x := k;
-			key_pair.y := highestVersion(k);
+		var key_pair : key_tups.t;
+		key_pair.x := k;
+		key_pair.y := highestVersion(k);
 
-			# 0 is the default value
-			rep.qvalue := mvMap.get(key_pair, 0);
+		# 0 is the default value
+		rep.qvalue := mvMap.get(key_pair, 0);
 
-			call spec.commit(q, rep);
+		call spec.commit(q, rep);
+		call trans.send_reply(self, self, rep);
+            } else {
+		# Send inquire message to tail
+		call trans.send_inquire(self, node.max, q);
+            }
+	}
 
-			# This may need to be changed if we want to
-			# send reply to the node that received the client message
-            call trans.send_reply(self, self, rep);
-        } else {
-            # Send inquire message to tail
-            call trans.send_inquire(self, node.max, q);
-        };
-    }
-
-	    implement trans.handle_reply(q: query) {
-            call answer(q.qkey, q.qvalue, q.qid);
+	implement trans.handle_reply(q: query) {
+            call answer(q.qkey, q.qvalue);
         }
     }    
 } with spec, trans, node, key_tups
