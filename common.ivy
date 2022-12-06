@@ -7,6 +7,7 @@ include pair
 type key
 type value
 instance ver_num : seq_num
+instance req_num : seq_num
 instance msg_num : seq_num
 
 instance node : iterable
@@ -27,7 +28,8 @@ object query = {
         qkey : key,
         qtype : query_type,
         qvalue : value,
-        qsrc: node,
+        qsrc : node,
+        qid : req_num.t, # unique id for each request coming from clients
         qvnum: ver_num.t # version number
     }
 }

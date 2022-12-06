@@ -13,27 +13,23 @@ isolate trans = {
     action send_reply(src:node, dst:node, rq: query)
     action send_inquire(src:node, dst:node, rq: query)
     action send_inform(src:node, dst:node, rq: query)
-    # action send_delegate(src: node, dst: node, k: key, v: value)
 
     action handle_request(dst: node, rq: query)
     action handle_reply(dst: node, rq: query)
     action handle_inquire(dst: node, rq: query)
     action handle_inform(dst: node, rq: query)
-    # action handle_delegate(dst: node, k: key, v: value)
 
     specification {
         relation requested(R: query, N: node)
         relation replied(R: query, N: node)
         relation inquired(R: query, N: node)
         relation informed(R: query, N: node)
-        # relation delegated(K: key, V: value, N: node)
 
         after init {
             requested(R, N) := false;
             replied(R, N) := false;
             inquired(R, N) := false;
             informed(R, N) := false;
-            # delegated(K, V, N) := false;
         }
 
         before send_request {
