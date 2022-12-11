@@ -152,6 +152,8 @@ isolate system = {
 	}
     }
 
+    invariant [safety] trans.replied(R, D) -> spec.replies(R)
+    
     # unique requests and replies to enable trans.send_reply, trans.send_request
     # enable trans.send_reply from trans.handle_request
     invariant ~(trans.requested(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
@@ -161,5 +163,7 @@ isolate system = {
     invariant trans.requested(R, D) -> query.qid(R) < server(query.qsrc(R)).req_no
     # enable trans.send_reply from system.set, system.get
     invariant trans.replied(R, D) -> query.qsrc(R) = D & query.qid(R) < server(query.qsrc(R)).req_no
-
+    
 } with spec, trans, node, key_tups
+
+extract impl(me: node) = system.server(me), trans(me), net(me), node, impl_interp, ver_num, req_num

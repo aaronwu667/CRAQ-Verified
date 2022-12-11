@@ -6,8 +6,6 @@ isolate spec = {
     relation requests(R:request_query)
     relation replies(R:reply_query)
     function map(K:key) : value
-
-    action commit(req: request_query, repl: reply_query)
     
     after init {
 	# Abstract "default" value
@@ -23,23 +21,22 @@ isolate spec = {
 	}
     }
     
-    implementation {
-	# Service's response to client
-	implement commit(req: request_query, repl: reply_query) {
-	    var checkDat : value;
-	    if req.qtype = write {
-		checkDat := req.qvalue;
-	    } else {
-		checkDat := map(req.qkey);
-	    }
-	    if ~requests(req) & repl.qvalue = checkDat {
-		if req.qtype = write {
-		    # Update map
-		    map(req.qkey) := req.qvalue;
-		}
-		requests(req) := true;
-		replies(repl) := true	
-	    }
+
+    action commit(req: request_query, repl: reply_query) = {
+	var checkDat : value;
+	if req.qtype = write {
+	    checkDat := req.qvalue;
+	} else {
+	    checkDat := map(req.qkey);
 	}
-    }
+	if ~requests(req) & repl.qvalue = checkDat {
+	    if req.qtype = write {
+		# Update map
+		map(req.qkey) := req.qvalue;
+	    }
+	    requests(req) := true;
+	    replies(repl) := true	
+	}
+    }    
+    
 } with ver_num
