@@ -28,9 +28,11 @@ isolate system = {
             q.qtype := write;
             q.qvalue := v;
             q.qsrc := self;
-	    q.qid := req_no;
+
+	    # First increment req/ver number, then assign
 	    req_no := req_no.next;
-	    
+	    q.qid := req_no;
+	    	    
             if self = 0:node {
 		ver_no := ver_no.next;
 		q.qvnum := ver_no;
@@ -38,11 +40,11 @@ isolate system = {
 		var key_pair : key_tups.t;
 		key_pair.x := k;
 		key_pair.y := ver_no;
-		mvMap.set(key_pair, v);
-		
-		dBitMap(k) := true;
+		mvMap.set(key_pair, v);				
 		highestVersion(k) := ver_no;
+		
 		if ~(self = node.max) {
+		    dBitMap(k) := true;
 		    call trans.send_request(self, self.next, q);
 		} else {
 		    call tail_commit(q)
@@ -56,24 +58,25 @@ isolate system = {
 	    # assert rq.qtype = write
 	    if self = 0:node {
 		call set(rq.qkey, rq.qvalue)
-	    } else if ~(self = node.max) { 
+	    } else { 
 		var key_pair : key_tups.t;
 		key_pair.x := rq.qkey;
 		key_pair.y := rq.qvnum;
 
 		mvMap.set(key_pair, rq.qvalue);
-		
-		# Update dirty bit map
-		dBitMap(rq.qkey) := true;
-		
+
 		# Safe because network messages delivered in-order
 		highestVersion(rq.qkey) := rq.qvnum;
 		
-		# Forward query
-		call trans.send_request(self, self.next, rq)
-	    } else {
-		# if tail
-		call tail_commit(rq: query)
+		if ~(self = node.max) {
+		    # Update dirty bit map only on non-tail nodes
+		    dBitMap(rq.qkey) := true;
+		    
+		    # Forward query
+		    call trans.send_request(self, self.next, rq)
+		} else {
+		    call tail_commit(rq: query)
+		}
 	    }
 	}
 
@@ -87,10 +90,14 @@ isolate system = {
             q.qkey := k;
             q.qtype := read;
             q.qsrc := self;
-	    q.qid := req_no;
+
 	    req_no := req_no.next;
+	    q.qid := req_no;
+
 
             if ~dBitMap(k) {
+		# tail always takes this branch,
+		# since its dBitMap is never changed
 		var rep := q;
 
 		var key_pair : key_tups.t;
@@ -108,16 +115,40 @@ isolate system = {
             }
 	}
 
-	implement trans.handle_reply(q: query) {
-            call answer(q.qkey, q.qvalue, q.qid);
+	implement trans.handle_reply(rq: query) {
+            call answer(rq.qkey, rq.qvalue, rq.qid);
         }
 
-	implement trans.handle_inquire(rq: query) {
-	    # TODO
+	implement trans.handle_inform(rq: query) {
+	    var rep : query;
+	    rep.qkey := rq.qkey;
+	    rep.qtype := rq.qtype;
+	    rep.qsrc := self;
+	    rep.qid := rq.qid;
+	    rep.qvnum := rq.qvnum;
+	    
+	    if highestVersion(rq.qkey) = rq.qvnum {
+		dBitMap(rq.qkey) := false
+	    }
+	    var key_pair : key_tups.t;
+	    key_pair.x := rq.qkey;
+	    key_pair.y := rq.qvnum;
+	    
+	    rep.qvalue := mvMap.get(key_pair, 0);
+	    call spec.commit(rep, rep);
+	    call trans.send_reply(self, self, rep)
 	}
 
-	implement trans.handle_inform(rq: query) {
-	    # TODO
+	implement trans.handle_inquire(rq: query) {
+	    # assert self = node.max
+	    var rep : query;
+	    rep.qkey := rq.qkey;
+	    rep.qtype := rq.qtype;
+	    rep.qid := rq.qid;	    
+	    rep.qsrc := self;
+	    rep.qvnum := highestVersion(rq.qkey);
+	    
+	    call trans.send_inform(self, rq.qsrc, rep)
 	}
     }
 
