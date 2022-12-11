@@ -166,4 +166,7 @@ isolate system = {
     
 } with spec, trans, node, key_tups
 
+export system.server.set
+export system.server.get
+
 extract impl(me: node) = system.server(me), trans(me), net(me), node, impl_interp, ver_num, req_num
