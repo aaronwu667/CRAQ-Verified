@@ -13,7 +13,6 @@ isolate system = {
 
 	action set(k: key, d: value)
 	action get(k:key)
-	action tail_commit(rq: query)
 
 	import action answer(k: key, v: value, id: req_num.t)
 	
@@ -46,7 +45,9 @@ isolate system = {
 		    dBitMap(k) := true;
 		    call trans.send_request(self, self.next, q);
 		} else {
-		    call tail_commit(q)
+		    # tail commit
+		    call spec.commit(q, q);
+		    call trans.send_reply(self, self, q)
 		}
             } else {
 		call trans.send_request(self, 0, q);
@@ -73,15 +74,13 @@ isolate system = {
 		    
 		    call trans.send_request(self, self.next, rq)
 		} else {
-		    call tail_commit(rq)
+		    # tail commit
+		    call spec.commit(rq, rq);
+		    call trans.send_reply(self, self, rq)
 		}
 	    }
 	}
 
-	implement tail_commit(rq: query) {
-	    call spec.commit(rq, rq);
-	    call trans.send_reply(self, self, rq)
-	}
 	
 	implement get(k:key) {
             var q: query;
@@ -130,14 +129,12 @@ isolate system = {
 	    key_pair.x := rq.qkey;
 	    key_pair.y := rq.qvnum;
 	    
-	    # rep.qvalue := mvMap.get(key_pair);
 	    rep.qvalue := mvMap(key_pair);
 	    call spec.commit(rep, rep);
 	    call trans.send_reply(self, self, rep)
 	}
 
 	implement trans.handle_inquire(rq: query) {
-	    # assert self = node.max
 	    var rep : query;
 	    rep.qkey := rq.qkey;
 	    rep.qtype := rq.qtype;
@@ -149,6 +146,25 @@ isolate system = {
 	}
     }
 
+    invariant [safety] trans.replied(R, D) -> spec.replies(R)
+
+    # Manually added invariants from SHT
+    invariant ~(trans.requested(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
+    invariant trans.requested(R1, D1) & trans.requested(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
+    invariant trans.requested(R, D) -> query.qid(R) < server(query.qsrc(R)).req_no
+    invariant trans.replied(R, D) -> query.qsrc(R) = D & query.qid(R) < server(query.qsrc(R)).req_no
+    invariant ~(trans.informed(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
+    invariant trans.inquired(R, D) -> query.qid(R) < server(query.qsrc(R)).req_no & D = node.max
+    invariant ~(trans.inquired(R1, D1) & trans.informed(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
+    
+    # Relevant IC3PO invariants from SHT
+    invariant (forall N1, R1.(spec.requests(R1) -> ~trans.requested(R1, N1)))
+    invariant (forall R1.(spec.requests(R1) -> (query.qid(R1) < system.server.req_no(query.qsrc(R1)))))
+    invariant (forall N1, R1.(trans.requested(R1, N1) -> ((read = query.qtype(R1)) | (write = query.qtype(R1)) | (read = write))))
+
+    # Additional manually added invariants
+    invariant trans.informed(R,D) -> query.qsrc(R) = node.max & query.qid(R) < server(D).req_no
+    invariant trans.informed(R,D) -> trans.inquired(R, node.max) 
     
 } with spec, trans, node, key_tups, req_num, ver_num
 
