@@ -7,7 +7,6 @@ isolate system = {
     object server(self: node) = {
 	function dBitMap(K: key) : bool
 	function highestVersion(K: key) : ver_num.t
-	# instance mvMap : map(key_tups.t, value, 0)
 	function mvMap(K: key_tups.t) : value
 	individual ver_no: ver_num.t
 	individual req_no: req_num.t
@@ -33,7 +32,7 @@ isolate system = {
 	    # First increment req/ver number, then assign
 	    req_no := req_no.next;
 	    q.qid := req_no;
-	    	    
+	    
             if self = 0 {
 		ver_no := ver_no.next;
 		q.qvnum := ver_no;
@@ -41,7 +40,6 @@ isolate system = {
 		var key_pair : key_tups.t;
 		key_pair.x := k;
 		key_pair.y := ver_no;
-		# call mvMap.set_(key_pair,v);
 		mvMap(key_pair) := v;
 		highestVersion(k) := ver_no;
 		
@@ -65,7 +63,6 @@ isolate system = {
 		key_pair.x := rq.qkey;
 		key_pair.y := rq.qvnum;
 
-		# call mvMap.set_(key_pair, rq.qvalue);
 		mvMap(key_pair) := rq.qvalue;
 
 		# Safe because network messages delivered in-order
@@ -107,7 +104,6 @@ isolate system = {
 		key_pair.y := highestVersion(k);
 
 		# 0 is the default value
-		# rep.qvalue := mvMap.get(key_pair);
 		rep.qvalue := mvMap(key_pair);
 
 		call spec.commit(q, rep);
@@ -162,7 +158,7 @@ isolate system = {
     # unique requests and replies to enable trans.send_reply, trans.send_request
     # for the following, R -> message, D -> destination node
 
-	# enable trans.send_reply from trans.handle_request
+    # enable trans.send_reply from trans.handle_request
     invariant ~(trans.requested(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
     # enable trans.send_request from trans.handle_request
     invariant trans.requested(R1, D1) & trans.requested(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
@@ -171,13 +167,13 @@ isolate system = {
     # enable trans.send_reply from system.set, system.get
     invariant trans.replied(R, D) -> query.qsrc(R) = D & query.qid(R) <= server(query.qsrc(R)).req_no
 
-	# enable trans.send_reply from trans.handle_inform
+    # enable trans.send_reply from trans.handle_inform
     invariant ~(trans.informed(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
 
-	# enable trans.send_inquire from system.get
+    # enable trans.send_inquire from system.get
     invariant trans.inquired(R, D) -> query.qid(R) <= server(query.qsrc(R)).req_no & D = node.max
 
-	# enable trans.inform from trans.inquire
+    # enable trans.inform from trans.inquire
     invariant ~(trans.inquired(R1, D1) & trans.informed(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
     
 } with spec, trans, node, key_tups
