@@ -72,10 +72,7 @@ isolate system = {
 		    # Update dirty bit map only on non-tail nodes
 		    dBitMap(rq.qkey) := true;
 		    
-		    # Forward query
-			var for_rq : query;
-			for_rq.qsrc := self;
-		    call trans.send_request(self, self.next, for_rq)
+		    call trans.send_request(self, self.next, rq)
 		} else {
 		    call tail_commit(rq: query)
 		}
@@ -125,7 +122,7 @@ isolate system = {
 	    var rep : query;
 	    rep.qkey := rq.qkey;
 	    rep.qtype := rq.qtype;
-	    rep.qsrc := self;
+	    rep.qsrc := rq.qsrc;
 	    rep.qid := rq.qid;
 	    rep.qvnum := rq.qvnum;
 	    
@@ -147,7 +144,7 @@ isolate system = {
 	    rep.qkey := rq.qkey;
 	    rep.qtype := rq.qtype;
 	    rep.qid := rq.qid;	    
-	    rep.qsrc := self;
+	    rep.qsrc := rq.qsrc;
 	    rep.qvnum := highestVersion(rq.qkey);
 	    
 	    call trans.send_inform(self, rq.qsrc, rep)
@@ -164,10 +161,19 @@ isolate system = {
     invariant ~(trans.requested(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
     # enable trans.send_request from trans.handle_request
     invariant trans.requested(R1, D1) & trans.requested(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
-    # enable trans.send_request from system.set, system.get
+    # enable trans.send_request from system.set
     invariant trans.requested(R, D) -> query.qid(R) <= server(query.qsrc(R)).req_no
     # enable trans.send_reply from system.set, system.get
     invariant trans.replied(R, D) -> query.qsrc(R) = D & query.qid(R) <= server(query.qsrc(R)).req_no
+
+	# enable trans.send_reply from trans.handle_inform
+    invariant ~(trans.informed(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
+
+	# enable trans.send_inquire from system.get
+    invariant trans.inquired(R, D) -> query.qid(R) <= server(query.qsrc(R)).req_no & D = node.max
+
+	# enable trans.inform from trans.inquire
+    invariant ~(trans.inquired(R1, D1) & trans.informed(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
     
 } with spec, trans, node, key_tups
 
