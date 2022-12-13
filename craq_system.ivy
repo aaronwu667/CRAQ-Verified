@@ -33,14 +33,14 @@ isolate system = {
 	    req_no := req_no.next;
 	    q.qid := req_no;
 	    	    
-            if self = 0:node {
+            if self = 0 {
 		ver_no := ver_no.next;
 		q.qvnum := ver_no;
 		
 		var key_pair : key_tups.t;
 		key_pair.x := k;
 		key_pair.y := ver_no;
-		mvMap.set(key_pair, v);				
+		call mvMap.set(key_pair,v);
 		highestVersion(k) := ver_no;
 		
 		if ~(self = node.max) {
@@ -50,20 +50,20 @@ isolate system = {
 		    call tail_commit(q)
 		}
             } else {
-		call trans.send_request(self, 0:node, q);
+		call trans.send_request(self, 0, q);
             }
 	}
 
 	implement trans.handle_request(rq: query) {
 	    # assert rq.qtype = write
-	    if self = 0:node {
+	    if self = 0 {
 		call set(rq.qkey, rq.qvalue)
 	    } else { 
 		var key_pair : key_tups.t;
 		key_pair.x := rq.qkey;
 		key_pair.y := rq.qvnum;
 
-		mvMap.set(key_pair, rq.qvalue);
+		call mvMap.set(key_pair, rq.qvalue);
 
 		# Safe because network messages delivered in-order
 		highestVersion(rq.qkey) := rq.qvnum;
@@ -74,7 +74,7 @@ isolate system = {
 		    
 		    call trans.send_request(self, self.next, rq)
 		} else {
-		    call tail_commit(rq: query)
+		    call tail_commit(rq)
 		}
 	    }
 	}
@@ -122,13 +122,13 @@ isolate system = {
 	    var rep : query;
 	    rep.qkey := rq.qkey;
 	    rep.qtype := rq.qtype;
-	    rep.qsrc := rq.qsrc;
+	    rep.qsrc := self;
 	    rep.qid := rq.qid;
 	    rep.qvnum := rq.qvnum;
 	    
 	    if highestVersion(rq.qkey) = rq.qvnum {
 		dBitMap(rq.qkey) := false
-	    }
+	    };
 	    var key_pair : key_tups.t;
 	    key_pair.x := rq.qkey;
 	    key_pair.y := rq.qvnum;
@@ -144,7 +144,7 @@ isolate system = {
 	    rep.qkey := rq.qkey;
 	    rep.qtype := rq.qtype;
 	    rep.qid := rq.qid;	    
-	    rep.qsrc := rq.qsrc;
+	    rep.qsrc := self;
 	    rep.qvnum := highestVersion(rq.qkey);
 	    
 	    call trans.send_inform(self, rq.qsrc, rep)

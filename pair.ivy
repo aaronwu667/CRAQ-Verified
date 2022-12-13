@@ -4,11 +4,9 @@ include order
 
 # Module for (totally) lexicographically ordered pairs. 
 module pair(t1, t2) = {
-    object t = {
-	type this = struct {
-	    x : t1,
-	    y : t2
-	}
+    type t = struct {
+	x : t1,
+	y : t2
     }
     
     object spec = {
@@ -23,7 +21,7 @@ module pair(t1, t2) = {
 	
 	# Lexicographic ordering
 	relation (I: t < J : t)
-	definition (I: t < J : t) = I.x < J.x | (I.x = J.x & I.y < J.y)
+	definition (I: t < J : t) = x(I) < x(J) | (x(I) = x(J) & y(I) < y(J))
     }
 
     # total ordering
