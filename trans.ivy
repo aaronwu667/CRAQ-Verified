@@ -49,6 +49,7 @@ isolate trans = {
 
         before handle_reply {
             assert replied(rq, dst);
+            replied(rq, dst) := false;
         }
 
         before send_inquire {
