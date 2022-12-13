@@ -28,10 +28,9 @@ isolate system = {
             q.qtype := write;
             q.qvalue := v;
             q.qsrc := self;
-
-	    # First increment req/ver number, then assign
-	    req_no := req_no.next;
 	    q.qid := req_no;
+	    req_no := req_no.next;
+
 	    
             if self = 0 {
 		ver_no := ver_no.next;
@@ -89,10 +88,8 @@ isolate system = {
             q.qkey := k;
             q.qtype := read;
             q.qsrc := self;
-
-	    req_no := req_no.next;
 	    q.qid := req_no;
-
+	    req_no := req_no.next;
 
             if ~dBitMap(k) {
 		# tail always takes this branch,
@@ -152,31 +149,8 @@ isolate system = {
 	}
     }
 
-    invariant [safety] trans.replied(R, D) -> spec.replies(R)
     
-
-    # unique requests and replies to enable trans.send_reply, trans.send_request
-    # for the following, R -> message, D -> destination node
-
-    # enable trans.send_reply from trans.handle_request
-    invariant ~(trans.requested(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
-    # enable trans.send_request from trans.handle_request
-    invariant trans.requested(R1, D1) & trans.requested(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
-    # enable trans.send_request from system.set
-    invariant trans.requested(R, D) -> query.qid(R) <= server(query.qsrc(R)).req_no
-    # enable trans.send_reply from system.set, system.get
-    invariant trans.replied(R, D) -> query.qsrc(R) = D & query.qid(R) <= server(query.qsrc(R)).req_no
-
-    # enable trans.send_reply from trans.handle_inform
-    invariant ~(trans.informed(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
-
-    # enable trans.send_inquire from system.get
-    invariant trans.inquired(R, D) -> query.qid(R) <= server(query.qsrc(R)).req_no & D = node.max
-
-    # enable trans.inform from trans.inquire
-    invariant ~(trans.inquired(R1, D1) & trans.informed(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
-    
-} with spec, trans, node, key_tups
+} with spec, trans, node, key_tups, req_num, ver_num
 
 export system.server.set
 export system.server.get
