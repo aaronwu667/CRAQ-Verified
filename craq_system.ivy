@@ -7,7 +7,8 @@ isolate system = {
     object server(self: node) = {
 	function dBitMap(K: key) : bool
 	function highestVersion(K: key) : ver_num.t
-	instance mvMap : ordered_map(key_tups, value)
+	# instance mvMap : map(key_tups.t, value, 0)
+	function mvMap(K: key_tups.t) : value
 	individual ver_no: ver_num.t
 	individual req_no: req_num.t
 
@@ -40,7 +41,8 @@ isolate system = {
 		var key_pair : key_tups.t;
 		key_pair.x := k;
 		key_pair.y := ver_no;
-		call mvMap.set(key_pair,v);
+		# call mvMap.set_(key_pair,v);
+		mvMap(key_pair) := v;
 		highestVersion(k) := ver_no;
 		
 		if ~(self = node.max) {
@@ -63,7 +65,8 @@ isolate system = {
 		key_pair.x := rq.qkey;
 		key_pair.y := rq.qvnum;
 
-		call mvMap.set(key_pair, rq.qvalue);
+		# call mvMap.set_(key_pair, rq.qvalue);
+		mvMap(key_pair) := rq.qvalue;
 
 		# Safe because network messages delivered in-order
 		highestVersion(rq.qkey) := rq.qvnum;
@@ -104,7 +107,8 @@ isolate system = {
 		key_pair.y := highestVersion(k);
 
 		# 0 is the default value
-		rep.qvalue := mvMap.get(key_pair, 0);
+		# rep.qvalue := mvMap.get(key_pair);
+		rep.qvalue := mvMap(key_pair);
 
 		call spec.commit(q, rep);
 		call trans.send_reply(self, self, rep);
@@ -133,7 +137,8 @@ isolate system = {
 	    key_pair.x := rq.qkey;
 	    key_pair.y := rq.qvnum;
 	    
-	    rep.qvalue := mvMap.get(key_pair, 0);
+	    # rep.qvalue := mvMap.get(key_pair);
+	    rep.qvalue := mvMap(key_pair);
 	    call spec.commit(rep, rep);
 	    call trans.send_reply(self, self, rep)
 	}

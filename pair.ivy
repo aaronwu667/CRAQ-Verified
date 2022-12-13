@@ -9,28 +9,28 @@ module pair(t1, t2) = {
 	y : t2
     }
     
-    object spec = {
-	# Assume that struct fields are totally ordered
-	axiom [transitivityT1] X:t1 < Y & Y < Z -> X < Z
-	axiom [antisymmetryT1] ~(X:t1 < X)
-	axiom [totalityT1] X:t1 < Y | X = Y | Y < X
+    # object spec = {
+	# # Assume that struct fields are totally ordered
+	# axiom [transitivityT1] X:t1 < Y & Y < Z -> X < Z
+	# axiom [antisymmetryT1] ~(X:t1 < X)
+	# axiom [totalityT1] X:t1 < Y | X = Y | Y < X
 
-	axiom [transitivityT2] X:t2 < Y & Y < Z -> X < Z
-	axiom [antisymmetryT2] ~(X:t2 < X)
-	axiom [totalityT2] X:t2 < Y | X = Y | Y < X
-	
-	# Lexicographic ordering
-	relation (I: t < J : t)
-	definition (I: t < J : t) = x(I) < x(J) | (x(I) = x(J) & y(I) < y(J))
-    }
+	# axiom [transitivityT2] X:t2 < Y & Y < Z -> X < Z
+	# axiom [antisymmetryT2] ~(X:t2 < X)
+	# axiom [totalityT2] X:t2 < Y | X = Y | Y < X
 
-    # total ordering
-    instantiate total_order : totally_ordered(t)
+	# # Lexicographic ordering
+	# relation (I: t < J : t)
+	# definition (I: t < J : t) = x(I) < x(J) | (x(I) = x(J) & y(I) < y(J))
+    # }
 
-    # iteration over pairs
-    instantiate iter : order_iterator(this)
+    # # total ordering
+    # instantiate total_order : totally_ordered(t)
 
-    isolate pair_iso = t, spec, total_order, iter
+    # # iteration over pairs
+    # instantiate iter : order_iterator(this)
+
+    isolate pair_iso = t
 }
 
 
@@ -47,12 +47,12 @@ object testPair = {
 	two.x := 1;
 	one.y := 2;
 	two.y := 3;
-	assert(one <= two);
+	# assert(one <= two);
 	one.y := 3;
 	#assert(one < two);
 	assert(one = two);
 	one.y := 4;
-	assert(two < one)
+	assert(two ~= one)
     }
 }
 
