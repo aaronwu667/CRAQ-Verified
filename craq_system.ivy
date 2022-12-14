@@ -53,7 +53,7 @@ isolate system = {
 		call trans.send_request(self, 0, q);
             }
 	}
-
+        
 	implement trans.handle_request(rq: query) {
 	    # assert rq.qtype = write
 	    if self = 0 {
@@ -118,7 +118,7 @@ isolate system = {
 	    var rep : query;
 	    rep.qkey := rq.qkey;
 	    rep.qtype := rq.qtype;
-	    rep.qsrc := self;
+	    rep.qsrc := rq.qsrc;
 	    rep.qid := rq.qid;
 	    rep.qvnum := rq.qvnum;
 	    
@@ -146,7 +146,7 @@ isolate system = {
 	}
     }
 
-    invariant [safety] trans.replied(R, D) -> spec.replies(R)
+#     invariant [safety] trans.replied(R, D) -> spec.replies(R)
 
     # Manually added invariants from SHT
     invariant ~(trans.requested(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
@@ -154,7 +154,9 @@ isolate system = {
     invariant trans.requested(R, D) -> query.qid(R) < server(query.qsrc(R)).req_no
     invariant trans.replied(R, D) -> query.qsrc(R) = D & query.qid(R) < server(query.qsrc(R)).req_no
     invariant ~(trans.informed(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
-    invariant trans.inquired(R, D) -> query.qid(R) < server(query.qsrc(R)).req_no & D = node.max
+    invariant trans.inquired(R, D) -> ~(query.qsrc(R) = node.max)
+    invariant trans.inquired(R, D) -> query.qid(R) < server(query.qsrc(R)).req_no
+    invariant trans.inquired(R,D) -> D = node.max
     invariant ~(trans.inquired(R1, D1) & trans.informed(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
     
     # Relevant IC3PO invariants from SHT
@@ -163,9 +165,11 @@ isolate system = {
     invariant (forall N1, R1.(trans.requested(R1, N1) -> ((read = query.qtype(R1)) | (write = query.qtype(R1)) | (read = write))))
 
     # Additional manually added invariants
-    invariant trans.informed(R,D) -> query.qsrc(R) = node.max & query.qid(R) < server(D).req_no & ~(D = node.max)
+    invariant trans.informed(R,D) -> query.qid(R) < server(query.qsrc(R)).req_no
     invariant ~(trans.informed(R,D) & query.qsrc(R) = node.max)
     invariant ~(trans.informed(R,D) & D = node.max)
+
+    invariant server(node.max).dBitMap(K) = false
     
 } with spec, trans, node, key_tups, req_num, ver_num
 

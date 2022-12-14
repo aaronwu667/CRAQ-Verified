@@ -198,12 +198,6 @@ isolate trans = {
 	invariant mq(S, D).contents(M) & recv_seq(D, S) <= msg.msgnum(M)
         & msg.t(M) = msg_type.inform -> informed(msg.body(M), D)
 
-	# # If I have a delegate message for D enqueued and if its sequence number is
-	# # >= D's receive sequence number, then the message is pending.
-
-	#     invariant mq(S, D).contents(M) & recv_seq(D, S) <= msg.num(M)
-	#         & msg.m_kind(M) = msg_kind.delegate_t -> delegated(msg.rq(M).rkey, msg.rq(M).rdata, D)
-
 	# A given request cannot occur twice in the network
 
 	invariant mq(S1, D).contents(M1) & recv_seq(D, S1) <= msg.msgnum(M1)
