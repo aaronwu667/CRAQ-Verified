@@ -139,7 +139,7 @@ isolate system = {
 	    rep.qkey := rq.qkey;
 	    rep.qtype := rq.qtype;
 	    rep.qid := rq.qid;	    
-	    rep.qsrc := self;
+	    rep.qsrc := rq.qsrc;
 	    rep.qvnum := highestVersion(rq.qkey);
 	    
 	    call trans.send_inform(self, rq.qsrc, rep)
@@ -163,8 +163,9 @@ isolate system = {
     invariant (forall N1, R1.(trans.requested(R1, N1) -> ((read = query.qtype(R1)) | (write = query.qtype(R1)) | (read = write))))
 
     # Additional manually added invariants
-    invariant trans.informed(R,D) -> query.qsrc(R) = node.max & query.qid(R) < server(D).req_no
-    invariant trans.informed(R,D) -> trans.inquired(R, node.max) 
+    invariant trans.informed(R,D) -> query.qsrc(R) = node.max & query.qid(R) < server(D).req_no & ~(D = node.max)
+    invariant ~(trans.informed(R,D) & query.qsrc(R) = node.max)
+    invariant ~(trans.informed(R,D) & D = node.max)
     
 } with spec, trans, node, key_tups, req_num, ver_num
 
