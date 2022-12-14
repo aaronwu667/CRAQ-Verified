@@ -18,7 +18,7 @@ isolate system = {
 	
 	after init {
 	    dBitMap(K) := false;
-	    highestVersion(K) := 0
+	    highestVersion(K) := 0;
 	}
 
 	implement set(k: key, v: value) {
@@ -146,7 +146,7 @@ isolate system = {
 	}
     }
 
-#     invariant [safety] trans.replied(R, D) -> spec.replies(R)
+    invariant [safety] trans.replied(R, D) -> spec.replies(R)
 
     # Manually added invariants from SHT
     invariant ~(trans.requested(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
@@ -168,8 +168,10 @@ isolate system = {
     invariant trans.informed(R,D) -> query.qid(R) < server(query.qsrc(R)).req_no
     invariant ~(trans.informed(R,D) & query.qsrc(R) = node.max)
     invariant ~(trans.informed(R,D) & D = node.max)
-
     invariant server(node.max).dBitMap(K) = false
+    invariant trans.replied(R,D) -> (query.qtype(R) = read | (query.qtype(R) = write & query.qvnum(R) <= server(node.max).highestVersion(K)))
+    # initialization does not respect implicit ordering on queries
+#    invariant (query.qid(R1) < query.qid(R2)) -> (query.qtype(R1) = read | query.qtype(R2) = read |(query.qtype(R2) = write & query.qtype(R1) = write & query.qvnum(R1) < query.qvnum(R2)))
     
 } with spec, trans, node, key_tups, req_num, ver_num
 
