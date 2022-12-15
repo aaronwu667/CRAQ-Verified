@@ -25,7 +25,7 @@ module iterableExtract = {
 
     implementation {
         parameter size : t
-        interpret t -> bv[16]
+        interpret t -> bv[5]
         definition 0:t = <<< 0 >>>
         definition max = <<< `size` - 1 >>>
         
