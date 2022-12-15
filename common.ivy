@@ -55,7 +55,7 @@ instance node : iterableExtract
 instance key_tups : pair(key, ver_num.t)
 
 object impl_interp = {
-    interpret key -> bv[64]
+    interpret key -> bv[16]
     interpret value -> strlit
 }
 

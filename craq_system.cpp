@@ -1145,34 +1145,34 @@ for (unsigned A = 0; A < 32; A++) {
 }
     }
     {
-        unsigned long long __tmp2[32];
+        unsigned __tmp2[32];
 for (unsigned D = 0; D < 32; D++) {
-        __tmp2[D] = (0 & 18446744073709551615);
+        __tmp2[D] = (0 & 4294967295);
 }
 for (unsigned D = 0; D < 32; D++) {
         trans__recv_seq[D] = __tmp2[D];
 }
-        unsigned long long __tmp3[32];
+        unsigned __tmp3[32];
 for (unsigned D = 0; D < 32; D++) {
-        __tmp3[D] = (0 & 18446744073709551615);
+        __tmp3[D] = (0 & 4294967295);
 }
 for (unsigned D = 0; D < 32; D++) {
         trans__send_seq[D] = __tmp3[D];
 }
     }
     {
-        hash_thunk<unsigned long long,bool> __tmp4;
-for (unsigned long long K = 0; K < 0; K++) {
+        hash_thunk<unsigned,bool> __tmp4;
+for (unsigned K = 0; K < 65536; K++) {
         __tmp4[K] = false;
 }
-for (unsigned long long K = 0; K < 0; K++) {
+for (unsigned K = 0; K < 65536; K++) {
         system__server__dBitMap[K] = __tmp4[K];
 }
-        hash_thunk<unsigned long long,unsigned long long> __tmp5;
-for (unsigned long long K = 0; K < 0; K++) {
-        __tmp5[K] = (0 & 18446744073709551615);
+        hash_thunk<unsigned,unsigned> __tmp5;
+for (unsigned K = 0; K < 65536; K++) {
+        __tmp5[K] = (0 & 4294967295);
 }
-for (unsigned long long K = 0; K < 0; K++) {
+for (unsigned K = 0; K < 65536; K++) {
         system__server__highestVersion[K] = __tmp5[K];
 }
         struct __thunk__0 : thunk<craq_system::key_tups__t,__strlit>{
@@ -1183,11 +1183,11 @@ for (unsigned long long K = 0; K < 0; K++) {
             }
         };
         system__server__mvMap = hash_thunk<craq_system::key_tups__t,__strlit>(new __thunk__0());
-        hash_thunk<unsigned long long,__strlit> __tmp6;
-for (unsigned long long K = 0; K < 0; K++) {
+        hash_thunk<unsigned,__strlit> __tmp6;
+for (unsigned K = 0; K < 65536; K++) {
         __tmp6[K] = "";
 }
-for (unsigned long long K = 0; K < 0; K++) {
+for (unsigned K = 0; K < 65536; K++) {
         system__server__viewMap[K] = __tmp6[K];
 }
     }
@@ -1200,8 +1200,8 @@ void craq_system::ext__trans__handle_request(const query& rq){
         else {
             {
                                 key_tups__t loc__key_pair;
-    loc__key_pair.x = (unsigned long long)___ivy_choose(0,"loc:key_pair",612);
-    loc__key_pair.y = (unsigned long long)___ivy_choose(0,"loc:key_pair",612);
+    loc__key_pair.x = (unsigned)___ivy_choose(0,"loc:key_pair",612);
+    loc__key_pair.y = (unsigned)___ivy_choose(0,"loc:key_pair",612);
                 {
                     loc__key_pair.x = rq.qkey;
                     loc__key_pair.y = rq.qvnum;
@@ -1233,15 +1233,15 @@ void craq_system::ext__trans__handle_request(const query& rq){
         }
     }
 }
-void craq_system::ext__system__server__get(unsigned long long k){
+void craq_system::ext__system__server__get(unsigned k){
     {
         {
                         query loc__q;
-    loc__q.qkey = (unsigned long long)___ivy_choose(0,"loc:q",615);
+    loc__q.qkey = (unsigned)___ivy_choose(0,"loc:q",615);
     loc__q.qtype = (query_type)___ivy_choose(0,"loc:q",615);
     loc__q.qsrc = (unsigned)___ivy_choose(0,"loc:q",615);
-    loc__q.qid = (unsigned long long)___ivy_choose(0,"loc:q",615);
-    loc__q.qvnum = (unsigned long long)___ivy_choose(0,"loc:q",615);
+    loc__q.qid = (unsigned)___ivy_choose(0,"loc:q",615);
+    loc__q.qvnum = (unsigned)___ivy_choose(0,"loc:q",615);
             {
                 loc__q.qkey = k;
                 loc__q.qtype = read;
@@ -1253,17 +1253,17 @@ void craq_system::ext__system__server__get(unsigned long long k){
                         loc__q.qvnum = system__server__highestVersion[k];
                         {
                                                         query loc__rep;
-    loc__rep.qkey = (unsigned long long)___ivy_choose(0,"loc:rep",614);
+    loc__rep.qkey = (unsigned)___ivy_choose(0,"loc:rep",614);
     loc__rep.qtype = (query_type)___ivy_choose(0,"loc:rep",614);
     loc__rep.qsrc = (unsigned)___ivy_choose(0,"loc:rep",614);
-    loc__rep.qid = (unsigned long long)___ivy_choose(0,"loc:rep",614);
-    loc__rep.qvnum = (unsigned long long)___ivy_choose(0,"loc:rep",614);
+    loc__rep.qid = (unsigned)___ivy_choose(0,"loc:rep",614);
+    loc__rep.qvnum = (unsigned)___ivy_choose(0,"loc:rep",614);
                             {
                                 loc__rep = loc__q;
                                 {
                                                                         key_tups__t loc__key_pair;
-    loc__key_pair.x = (unsigned long long)___ivy_choose(0,"loc:key_pair",613);
-    loc__key_pair.y = (unsigned long long)___ivy_choose(0,"loc:key_pair",613);
+    loc__key_pair.x = (unsigned)___ivy_choose(0,"loc:key_pair",613);
+    loc__key_pair.y = (unsigned)___ivy_choose(0,"loc:key_pair",613);
                                     {
                                         loc__key_pair.x = k;
                                         loc__key_pair.y = system__server__highestVersion[k];
@@ -1283,15 +1283,15 @@ void craq_system::ext__system__server__get(unsigned long long k){
         }
     }
 }
-unsigned long long craq_system::ext__ver_num__next(unsigned long long seq){
-    unsigned long long res;
-    res = (unsigned long long)___ivy_choose(0,"fml:res",0);
+unsigned craq_system::ext__ver_num__next(unsigned seq){
+    unsigned res;
+    res = (unsigned)___ivy_choose(0,"fml:res",0);
     {
-        res = ((seq + (1 & 18446744073709551615)) & 18446744073709551615);
+        res = ((seq + (1 & 4294967295)) & 4294967295);
     }
     return res;
 }
-void craq_system::ext__trans__mq__imap__set(unsigned prm__D, unsigned long long nkey, const msg& v){
+void craq_system::ext__trans__mq__imap__set(unsigned prm__D, unsigned nkey, const msg& v){
     {
 
         trans__mq__imap__impl__s[prm__D][nkey] = v;
@@ -1352,8 +1352,8 @@ unsigned craq_system::ext__node__prev(unsigned x){
 void craq_system::ext__net__recv(const msg& v){
     {
         {
-                        unsigned long long loc__seq;
-    loc__seq = (unsigned long long)___ivy_choose(0,"loc:seq",619);
+                        unsigned loc__seq;
+    loc__seq = (unsigned)___ivy_choose(0,"loc:seq",619);
             {
                 loc__seq = v.msgnum;
                 {
@@ -1366,12 +1366,12 @@ void craq_system::ext__net__recv(const msg& v){
                                                                 msg loc__ack;
     loc__ack.t = (msg_type)___ivy_choose(0,"loc:ack",617);
     loc__ack.src = (unsigned)___ivy_choose(0,"loc:ack",617);
-    loc__ack.msgnum = (unsigned long long)___ivy_choose(0,"loc:ack",617);
-    loc__ack.body.qkey = (unsigned long long)___ivy_choose(0,"loc:ack",617);
+    loc__ack.msgnum = (unsigned)___ivy_choose(0,"loc:ack",617);
+    loc__ack.body.qkey = (unsigned)___ivy_choose(0,"loc:ack",617);
     loc__ack.body.qtype = (query_type)___ivy_choose(0,"loc:ack",617);
     loc__ack.body.qsrc = (unsigned)___ivy_choose(0,"loc:ack",617);
-    loc__ack.body.qid = (unsigned long long)___ivy_choose(0,"loc:ack",617);
-    loc__ack.body.qvnum = (unsigned long long)___ivy_choose(0,"loc:ack",617);
+    loc__ack.body.qid = (unsigned)___ivy_choose(0,"loc:ack",617);
+    loc__ack.body.qvnum = (unsigned)___ivy_choose(0,"loc:ack",617);
                                 {
                                     loc__ack.t = msg_type__ack;
                                     loc__ack.src = me;
@@ -1436,12 +1436,12 @@ void craq_system::ext__trans__timer__timeout(unsigned prm__D){
                                                 msg loc__0;
     loc__0.t = (msg_type)___ivy_choose(0,"loc:0",620);
     loc__0.src = (unsigned)___ivy_choose(0,"loc:0",620);
-    loc__0.msgnum = (unsigned long long)___ivy_choose(0,"loc:0",620);
-    loc__0.body.qkey = (unsigned long long)___ivy_choose(0,"loc:0",620);
+    loc__0.msgnum = (unsigned)___ivy_choose(0,"loc:0",620);
+    loc__0.body.qkey = (unsigned)___ivy_choose(0,"loc:0",620);
     loc__0.body.qtype = (query_type)___ivy_choose(0,"loc:0",620);
     loc__0.body.qsrc = (unsigned)___ivy_choose(0,"loc:0",620);
-    loc__0.body.qid = (unsigned long long)___ivy_choose(0,"loc:0",620);
-    loc__0.body.qvnum = (unsigned long long)___ivy_choose(0,"loc:0",620);
+    loc__0.body.qid = (unsigned)___ivy_choose(0,"loc:0",620);
+    loc__0.body.qvnum = (unsigned)___ivy_choose(0,"loc:0",620);
                         {
                             loc__0 = ext__trans__mq__pick_one(prm__D);
                             ext__net__send(prm__D, loc__0);
@@ -1456,11 +1456,11 @@ void craq_system::ext__trans__handle_inquire(const query& rq){
     {
         {
                         query loc__rep;
-    loc__rep.qkey = (unsigned long long)___ivy_choose(0,"loc:rep",622);
+    loc__rep.qkey = (unsigned)___ivy_choose(0,"loc:rep",622);
     loc__rep.qtype = (query_type)___ivy_choose(0,"loc:rep",622);
     loc__rep.qsrc = (unsigned)___ivy_choose(0,"loc:rep",622);
-    loc__rep.qid = (unsigned long long)___ivy_choose(0,"loc:rep",622);
-    loc__rep.qvnum = (unsigned long long)___ivy_choose(0,"loc:rep",622);
+    loc__rep.qid = (unsigned)___ivy_choose(0,"loc:rep",622);
+    loc__rep.qvnum = (unsigned)___ivy_choose(0,"loc:rep",622);
             {
                 loc__rep.qkey = rq.qkey;
                 loc__rep.qtype = rq.qtype;
@@ -1472,11 +1472,11 @@ void craq_system::ext__trans__handle_inquire(const query& rq){
         }
     }
 }
-unsigned long long craq_system::ext__msg_num__next(unsigned long long seq){
-    unsigned long long res;
-    res = (unsigned long long)___ivy_choose(0,"fml:res",0);
+unsigned craq_system::ext__msg_num__next(unsigned seq){
+    unsigned res;
+    res = (unsigned)___ivy_choose(0,"fml:res",0);
     {
-        res = ((seq + (1 & 18446744073709551615)) & 18446744073709551615);
+        res = ((seq + (1 & 4294967295)) & 4294967295);
     }
     return res;
 }
@@ -1487,12 +1487,12 @@ bool craq_system::ext__trans__mq__empty(unsigned prm__D){
         {
                         msg_num__iter__t loc__0;
     loc__0.is_end = (bool)___ivy_choose(0,"loc:0",623);
-    loc__0.val = (unsigned long long)___ivy_choose(0,"loc:0",623);
+    loc__0.val = (unsigned)___ivy_choose(0,"loc:0",623);
                         msg_num__iter__t loc__1;
     loc__1.is_end = (bool)___ivy_choose(0,"loc:1",623);
-    loc__1.val = (unsigned long long)___ivy_choose(0,"loc:1",623);
+    loc__1.val = (unsigned)___ivy_choose(0,"loc:1",623);
             {
-                loc__0 = ext__msg_num__iter__create((0 & 18446744073709551615));
+                loc__0 = ext__msg_num__iter__create((0 & 4294967295));
                 loc__1 = ext__trans__mq__imap__lub(prm__D, loc__0);
                 res = loc__1.is_end;
             }
@@ -1506,12 +1506,12 @@ void craq_system::ext__trans__send_inquire(unsigned dst, const query& rq){
                         msg loc__m;
     loc__m.t = (msg_type)___ivy_choose(0,"loc:m",624);
     loc__m.src = (unsigned)___ivy_choose(0,"loc:m",624);
-    loc__m.msgnum = (unsigned long long)___ivy_choose(0,"loc:m",624);
-    loc__m.body.qkey = (unsigned long long)___ivy_choose(0,"loc:m",624);
+    loc__m.msgnum = (unsigned)___ivy_choose(0,"loc:m",624);
+    loc__m.body.qkey = (unsigned)___ivy_choose(0,"loc:m",624);
     loc__m.body.qtype = (query_type)___ivy_choose(0,"loc:m",624);
     loc__m.body.qsrc = (unsigned)___ivy_choose(0,"loc:m",624);
-    loc__m.body.qid = (unsigned long long)___ivy_choose(0,"loc:m",624);
-    loc__m.body.qvnum = (unsigned long long)___ivy_choose(0,"loc:m",624);
+    loc__m.body.qid = (unsigned)___ivy_choose(0,"loc:m",624);
+    loc__m.body.qvnum = (unsigned)___ivy_choose(0,"loc:m",624);
             {
                 loc__m.t = msg_type__inquire;
                 loc__m.src = me;
@@ -1530,12 +1530,12 @@ void craq_system::ext__trans__send_commitAck(unsigned dst, const query& rq){
                         msg loc__m;
     loc__m.t = (msg_type)___ivy_choose(0,"loc:m",625);
     loc__m.src = (unsigned)___ivy_choose(0,"loc:m",625);
-    loc__m.msgnum = (unsigned long long)___ivy_choose(0,"loc:m",625);
-    loc__m.body.qkey = (unsigned long long)___ivy_choose(0,"loc:m",625);
+    loc__m.msgnum = (unsigned)___ivy_choose(0,"loc:m",625);
+    loc__m.body.qkey = (unsigned)___ivy_choose(0,"loc:m",625);
     loc__m.body.qtype = (query_type)___ivy_choose(0,"loc:m",625);
     loc__m.body.qsrc = (unsigned)___ivy_choose(0,"loc:m",625);
-    loc__m.body.qid = (unsigned long long)___ivy_choose(0,"loc:m",625);
-    loc__m.body.qvnum = (unsigned long long)___ivy_choose(0,"loc:m",625);
+    loc__m.body.qid = (unsigned)___ivy_choose(0,"loc:m",625);
+    loc__m.body.qvnum = (unsigned)___ivy_choose(0,"loc:m",625);
             {
                 loc__m.t = msg_type__commitAck;
                 loc__m.src = me;
@@ -1548,19 +1548,19 @@ void craq_system::ext__trans__send_commitAck(unsigned dst, const query& rq){
         }
     }
 }
-void craq_system::ext__trans__mq__delete_all(unsigned prm__D, unsigned long long seq){
+void craq_system::ext__trans__mq__delete_all(unsigned prm__D, unsigned seq){
     {
         {
                         msg_num__iter__t loc__0;
     loc__0.is_end = (bool)___ivy_choose(0,"loc:0",626);
-    loc__0.val = (unsigned long long)___ivy_choose(0,"loc:0",626);
-                        unsigned long long loc__1;
-    loc__1 = (unsigned long long)___ivy_choose(0,"loc:1",626);
+    loc__0.val = (unsigned)___ivy_choose(0,"loc:0",626);
+                        unsigned loc__1;
+    loc__1 = (unsigned)___ivy_choose(0,"loc:1",626);
                         msg_num__iter__t loc__2;
     loc__2.is_end = (bool)___ivy_choose(0,"loc:2",626);
-    loc__2.val = (unsigned long long)___ivy_choose(0,"loc:2",626);
+    loc__2.val = (unsigned)___ivy_choose(0,"loc:2",626);
             {
-                loc__0 = ext__msg_num__iter__create((0 & 18446744073709551615));
+                loc__0 = ext__msg_num__iter__create((0 & 4294967295));
                 loc__1 = ext__msg_num__next(seq);
                 loc__2 = ext__msg_num__iter__create(loc__1);
                 ext__trans__mq__imap__erase(prm__D, loc__0, loc__2);
@@ -1592,11 +1592,11 @@ bool craq_system::ext__net__tcp__send(int s, const msg& p){
     }
     return ok;
 }
-unsigned long long craq_system::ext__req_num__next(unsigned long long seq){
-    unsigned long long res;
-    res = (unsigned long long)___ivy_choose(0,"fml:res",0);
+unsigned craq_system::ext__req_num__next(unsigned seq){
+    unsigned res;
+    res = (unsigned)___ivy_choose(0,"fml:res",0);
     {
-        res = ((seq + (1 & 18446744073709551615)) & 18446744073709551615);
+        res = ((seq + (1 & 4294967295)) & 4294967295);
     }
     return res;
 }
@@ -1609,12 +1609,12 @@ void craq_system::ext__trans__send_inform(unsigned dst, const query& rq){
                         msg loc__m;
     loc__m.t = (msg_type)___ivy_choose(0,"loc:m",627);
     loc__m.src = (unsigned)___ivy_choose(0,"loc:m",627);
-    loc__m.msgnum = (unsigned long long)___ivy_choose(0,"loc:m",627);
-    loc__m.body.qkey = (unsigned long long)___ivy_choose(0,"loc:m",627);
+    loc__m.msgnum = (unsigned)___ivy_choose(0,"loc:m",627);
+    loc__m.body.qkey = (unsigned)___ivy_choose(0,"loc:m",627);
     loc__m.body.qtype = (query_type)___ivy_choose(0,"loc:m",627);
     loc__m.body.qsrc = (unsigned)___ivy_choose(0,"loc:m",627);
-    loc__m.body.qid = (unsigned long long)___ivy_choose(0,"loc:m",627);
-    loc__m.body.qvnum = (unsigned long long)___ivy_choose(0,"loc:m",627);
+    loc__m.body.qid = (unsigned)___ivy_choose(0,"loc:m",627);
+    loc__m.body.qvnum = (unsigned)___ivy_choose(0,"loc:m",627);
             {
                 loc__m.t = msg_type__inform;
                 loc__m.src = me;
@@ -1670,22 +1670,22 @@ craq_system::msg craq_system::ext__trans__mq__pick_one(unsigned prm__D){
     craq_system::msg res;
     res.t = (msg_type)___ivy_choose(0,"fml:res",0);
     res.src = (unsigned)___ivy_choose(0,"fml:res",0);
-    res.msgnum = (unsigned long long)___ivy_choose(0,"fml:res",0);
-    res.body.qkey = (unsigned long long)___ivy_choose(0,"fml:res",0);
+    res.msgnum = (unsigned)___ivy_choose(0,"fml:res",0);
+    res.body.qkey = (unsigned)___ivy_choose(0,"fml:res",0);
     res.body.qtype = (query_type)___ivy_choose(0,"fml:res",0);
     res.body.qsrc = (unsigned)___ivy_choose(0,"fml:res",0);
-    res.body.qid = (unsigned long long)___ivy_choose(0,"fml:res",0);
-    res.body.qvnum = (unsigned long long)___ivy_choose(0,"fml:res",0);
+    res.body.qid = (unsigned)___ivy_choose(0,"fml:res",0);
+    res.body.qvnum = (unsigned)___ivy_choose(0,"fml:res",0);
     {
         {
                         msg_num__iter__t loc__0;
     loc__0.is_end = (bool)___ivy_choose(0,"loc:0",631);
-    loc__0.val = (unsigned long long)___ivy_choose(0,"loc:0",631);
+    loc__0.val = (unsigned)___ivy_choose(0,"loc:0",631);
                         msg_num__iter__t loc__1;
     loc__1.is_end = (bool)___ivy_choose(0,"loc:1",631);
-    loc__1.val = (unsigned long long)___ivy_choose(0,"loc:1",631);
+    loc__1.val = (unsigned)___ivy_choose(0,"loc:1",631);
             {
-                loc__0 = ext__msg_num__iter__create((0 & 18446744073709551615));
+                loc__0 = ext__msg_num__iter__create((0 & 4294967295));
                 loc__1 = ext__trans__mq__imap__lub(prm__D, loc__0);
                 res = ext__trans__mq__imap__get(prm__D, loc__1.val, res);
             }
@@ -1693,15 +1693,15 @@ craq_system::msg craq_system::ext__trans__mq__pick_one(unsigned prm__D){
     }
     return res;
 }
-void craq_system::ext__system__server__set(unsigned long long k, __strlit d){
+void craq_system::ext__system__server__set(unsigned k, __strlit d){
     {
         {
                         query loc__q;
-    loc__q.qkey = (unsigned long long)___ivy_choose(0,"loc:q",630);
+    loc__q.qkey = (unsigned)___ivy_choose(0,"loc:q",630);
     loc__q.qtype = (query_type)___ivy_choose(0,"loc:q",630);
     loc__q.qsrc = (unsigned)___ivy_choose(0,"loc:q",630);
-    loc__q.qid = (unsigned long long)___ivy_choose(0,"loc:q",630);
-    loc__q.qvnum = (unsigned long long)___ivy_choose(0,"loc:q",630);
+    loc__q.qid = (unsigned)___ivy_choose(0,"loc:q",630);
+    loc__q.qvnum = (unsigned)___ivy_choose(0,"loc:q",630);
             {
                 loc__q.qkey = k;
                 loc__q.qtype = write;
@@ -1715,8 +1715,8 @@ void craq_system::ext__system__server__set(unsigned long long k, __strlit d){
                         loc__q.qvnum = system__server__ver_no;
                         {
                                                         key_tups__t loc__key_pair;
-    loc__key_pair.x = (unsigned long long)___ivy_choose(0,"loc:key_pair",629);
-    loc__key_pair.y = (unsigned long long)___ivy_choose(0,"loc:key_pair",629);
+    loc__key_pair.x = (unsigned)___ivy_choose(0,"loc:key_pair",629);
+    loc__key_pair.y = (unsigned)___ivy_choose(0,"loc:key_pair",629);
                             {
                                 loc__key_pair.x = k;
                                 loc__key_pair.y = system__server__ver_no;
@@ -1767,12 +1767,12 @@ void craq_system::ext__trans__send_reply(unsigned dst, const query& rq){
                         msg loc__m;
     loc__m.t = (msg_type)___ivy_choose(0,"loc:m",632);
     loc__m.src = (unsigned)___ivy_choose(0,"loc:m",632);
-    loc__m.msgnum = (unsigned long long)___ivy_choose(0,"loc:m",632);
-    loc__m.body.qkey = (unsigned long long)___ivy_choose(0,"loc:m",632);
+    loc__m.msgnum = (unsigned)___ivy_choose(0,"loc:m",632);
+    loc__m.body.qkey = (unsigned)___ivy_choose(0,"loc:m",632);
     loc__m.body.qtype = (query_type)___ivy_choose(0,"loc:m",632);
     loc__m.body.qsrc = (unsigned)___ivy_choose(0,"loc:m",632);
-    loc__m.body.qid = (unsigned long long)___ivy_choose(0,"loc:m",632);
-    loc__m.body.qvnum = (unsigned long long)___ivy_choose(0,"loc:m",632);
+    loc__m.body.qid = (unsigned)___ivy_choose(0,"loc:m",632);
+    loc__m.body.qvnum = (unsigned)___ivy_choose(0,"loc:m",632);
             {
                 loc__m.t = msg_type__reply;
                 loc__m.src = me;
@@ -1785,7 +1785,7 @@ void craq_system::ext__trans__send_reply(unsigned dst, const query& rq){
         }
     }
 }
-void craq_system::imp__system__server__answer(unsigned long long k, __strlit v, unsigned long long id){
+void craq_system::imp__system__server__answer(unsigned k, __strlit v, unsigned id){
     {
     }
 }
@@ -1827,14 +1827,14 @@ void craq_system::ext__net__send(unsigned dst, const msg& v){
 }
 void craq_system::ext__trans__handle_inform(const query& rq){
     {
-        ivy_assume((system__server__dBitMap[rq.qkey] == true), "craq_system.ivy: line 138");
+        ivy_assume((system__server__dBitMap[rq.qkey] == true), "craq_system.ivy: line 135");
         {
                         query loc__rep;
-    loc__rep.qkey = (unsigned long long)___ivy_choose(0,"loc:rep",636);
+    loc__rep.qkey = (unsigned)___ivy_choose(0,"loc:rep",636);
     loc__rep.qtype = (query_type)___ivy_choose(0,"loc:rep",636);
     loc__rep.qsrc = (unsigned)___ivy_choose(0,"loc:rep",636);
-    loc__rep.qid = (unsigned long long)___ivy_choose(0,"loc:rep",636);
-    loc__rep.qvnum = (unsigned long long)___ivy_choose(0,"loc:rep",636);
+    loc__rep.qid = (unsigned)___ivy_choose(0,"loc:rep",636);
+    loc__rep.qvnum = (unsigned)___ivy_choose(0,"loc:rep",636);
             {
                 loc__rep.qkey = rq.qkey;
                 loc__rep.qtype = rq.qtype;
@@ -1846,8 +1846,8 @@ void craq_system::ext__trans__handle_inform(const query& rq){
                 }
                 {
                                         key_tups__t loc__key_pair;
-    loc__key_pair.x = (unsigned long long)___ivy_choose(0,"loc:key_pair",635);
-    loc__key_pair.y = (unsigned long long)___ivy_choose(0,"loc:key_pair",635);
+    loc__key_pair.x = (unsigned)___ivy_choose(0,"loc:key_pair",635);
+    loc__key_pair.y = (unsigned)___ivy_choose(0,"loc:key_pair",635);
                     {
                         loc__key_pair.x = rq.qkey;
                         loc__key_pair.y = rq.qvnum;
@@ -1872,14 +1872,14 @@ unsigned craq_system::ext__node__next(unsigned x){
 craq_system::msg_num__iter__t craq_system::ext__trans__mq__imap__lub(unsigned prm__D, const msg_num__iter__t& it){
     craq_system::msg_num__iter__t res;
     res.is_end = (bool)___ivy_choose(0,"fml:res",0);
-    res.val = (unsigned long long)___ivy_choose(0,"fml:res",0);
+    res.val = (unsigned)___ivy_choose(0,"fml:res",0);
     {
 
         if (it.is_end) {
             res.is_end = true;
             res.val = 0;
         } else {
-            std::map<unsigned long long,msg>::iterator __it = trans__mq__imap__impl__s[prm__D].lower_bound(it.val);
+            std::map<unsigned,msg>::iterator __it = trans__mq__imap__impl__s[prm__D].lower_bound(it.val);
             if (__it == trans__mq__imap__impl__s[prm__D].end()) {
                 res.is_end = true;
                 res.val = 0;
@@ -1899,19 +1899,19 @@ void craq_system::ext__trans__mq__enqueue(unsigned prm__D, msg m){
         ext__trans__mq__imap__set(prm__D, m.msgnum, m);
     }
 }
-craq_system::msg craq_system::ext__trans__mq__imap__get(unsigned prm__D, unsigned long long k, const msg& def){
+craq_system::msg craq_system::ext__trans__mq__imap__get(unsigned prm__D, unsigned k, const msg& def){
     craq_system::msg v;
     v.t = (msg_type)___ivy_choose(0,"fml:v",0);
     v.src = (unsigned)___ivy_choose(0,"fml:v",0);
-    v.msgnum = (unsigned long long)___ivy_choose(0,"fml:v",0);
-    v.body.qkey = (unsigned long long)___ivy_choose(0,"fml:v",0);
+    v.msgnum = (unsigned)___ivy_choose(0,"fml:v",0);
+    v.body.qkey = (unsigned)___ivy_choose(0,"fml:v",0);
     v.body.qtype = (query_type)___ivy_choose(0,"fml:v",0);
     v.body.qsrc = (unsigned)___ivy_choose(0,"fml:v",0);
-    v.body.qid = (unsigned long long)___ivy_choose(0,"fml:v",0);
-    v.body.qvnum = (unsigned long long)___ivy_choose(0,"fml:v",0);
+    v.body.qid = (unsigned)___ivy_choose(0,"fml:v",0);
+    v.body.qvnum = (unsigned)___ivy_choose(0,"fml:v",0);
     {
 
-        std::map<unsigned long long,msg>::iterator it = trans__mq__imap__impl__s[prm__D].find(k);
+        std::map<unsigned,msg>::iterator it = trans__mq__imap__impl__s[prm__D].find(k);
         if (it == trans__mq__imap__impl__s[prm__D].end()) {
             v = def;
         } else {
@@ -1926,12 +1926,12 @@ void craq_system::ext__trans__send_request(unsigned dst, const query& rq){
                         msg loc__m;
     loc__m.t = (msg_type)___ivy_choose(0,"loc:m",637);
     loc__m.src = (unsigned)___ivy_choose(0,"loc:m",637);
-    loc__m.msgnum = (unsigned long long)___ivy_choose(0,"loc:m",637);
-    loc__m.body.qkey = (unsigned long long)___ivy_choose(0,"loc:m",637);
+    loc__m.msgnum = (unsigned)___ivy_choose(0,"loc:m",637);
+    loc__m.body.qkey = (unsigned)___ivy_choose(0,"loc:m",637);
     loc__m.body.qtype = (query_type)___ivy_choose(0,"loc:m",637);
     loc__m.body.qsrc = (unsigned)___ivy_choose(0,"loc:m",637);
-    loc__m.body.qid = (unsigned long long)___ivy_choose(0,"loc:m",637);
-    loc__m.body.qvnum = (unsigned long long)___ivy_choose(0,"loc:m",637);
+    loc__m.body.qid = (unsigned)___ivy_choose(0,"loc:m",637);
+    loc__m.body.qvnum = (unsigned)___ivy_choose(0,"loc:m",637);
             {
                 loc__m.t = msg_type__request;
                 loc__m.src = me;
@@ -1944,17 +1944,17 @@ void craq_system::ext__trans__send_request(unsigned dst, const query& rq){
         }
     }
 }
-craq_system::msg_num__iter__t craq_system::ext__msg_num__iter__create(unsigned long long x){
+craq_system::msg_num__iter__t craq_system::ext__msg_num__iter__create(unsigned x){
     craq_system::msg_num__iter__t y;
     y.is_end = (bool)___ivy_choose(0,"fml:y",0);
-    y.val = (unsigned long long)___ivy_choose(0,"fml:y",0);
+    y.val = (unsigned)___ivy_choose(0,"fml:y",0);
     {
         y.is_end = false;
         y.val = x;
     }
     return y;
 }
-void craq_system::ext__system__server__answer(unsigned long long k, __strlit v, unsigned long long id){
+void craq_system::ext__system__server__answer(unsigned k, __strlit v, unsigned id){
     imp__system__server__answer(k, v, id);
 }
 void craq_system::ext__net__tcp__close(int s){
@@ -2014,11 +2014,11 @@ pthread_mutex_init(&mutex,NULL);
 #endif
 __lock();
     __CARD__node = 32;
-    __CARD__ver_num__t = 0;
-    __CARD__key = 0;
+    __CARD__ver_num__t = 4294967296;
+    __CARD__key = 65536;
     __CARD__net__tcp__socket = 0;
-    __CARD__msg_num__t = 0;
-    __CARD__req_num__t = 0;
+    __CARD__msg_num__t = 4294967296;
+    __CARD__req_num__t = 4294967296;
     __CARD__value = 0;
 
     the_tcp_config = 0;
@@ -2042,28 +2042,28 @@ __lock();
         install_timer(trans__timer__impl__tmr[D] = new sec_timer(thunk__trans__timer__impl__handle_timeout(this, D),this));
     }
 this->node__size = node__size;
-struct __thunk__1 : thunk<unsigned long long,bool>{
+struct __thunk__1 : thunk<unsigned,bool>{
     __thunk__1()  {
     }
-    bool operator()(const unsigned long long &arg){
+    bool operator()(const unsigned &arg){
         bool __tmp9;
     __tmp9 = (bool)___ivy_choose(0,"init",0);
         return __tmp9;
     }
 };
-system__server__dBitMap = hash_thunk<unsigned long long,bool>(new __thunk__1());
-    system__server__req_no = (unsigned long long)___ivy_choose(0,"init",0);
-    system__server__ver_no = (unsigned long long)___ivy_choose(0,"init",0);
-struct __thunk__2 : thunk<unsigned long long,unsigned long long>{
+system__server__dBitMap = hash_thunk<unsigned,bool>(new __thunk__1());
+    system__server__req_no = (unsigned)___ivy_choose(0,"init",0);
+    system__server__ver_no = (unsigned)___ivy_choose(0,"init",0);
+struct __thunk__2 : thunk<unsigned,unsigned>{
     __thunk__2()  {
     }
-    unsigned long long operator()(const unsigned long long &arg){
-        unsigned long long __tmp10;
-    __tmp10 = (unsigned long long)___ivy_choose(0,"init",0);
+    unsigned operator()(const unsigned &arg){
+        unsigned __tmp10;
+    __tmp10 = (unsigned)___ivy_choose(0,"init",0);
         return __tmp10;
     }
 };
-system__server__highestVersion = hash_thunk<unsigned long long,unsigned long long>(new __thunk__2());
+system__server__highestVersion = hash_thunk<unsigned,unsigned>(new __thunk__2());
 for (unsigned X__0 = 0; X__0 < 32; X__0++) {
     net__proc__isup[X__0] = (bool)___ivy_choose(0,"init",0);
 }
@@ -2073,10 +2073,10 @@ for (unsigned X__0 = 0; X__0 < 32; X__0++) {
     net__proc__pend[X__0] = (bool)___ivy_choose(0,"init",0);
 }
 for (unsigned X__0 = 0; X__0 < 32; X__0++) {
-    trans__recv_seq[X__0] = (unsigned long long)___ivy_choose(0,"init",0);
+    trans__recv_seq[X__0] = (unsigned)___ivy_choose(0,"init",0);
 }
 for (unsigned X__0 = 0; X__0 < 32; X__0++) {
-    trans__send_seq[X__0] = (unsigned long long)___ivy_choose(0,"init",0);
+    trans__send_seq[X__0] = (unsigned)___ivy_choose(0,"init",0);
 }
 for (unsigned X__0 = 0; X__0 < 32; X__0++) {
     net__proc__sock[X__0] = (int)___ivy_choose(0,"init",0);
@@ -2113,7 +2113,7 @@ void  __ser<craq_system::msg_num__iter__t>(ivy_ser &res, const craq_system::msg_
     __ser<bool>(res,t.is_end);
     res.close_field();
     res.open_field("val");
-    __ser<unsigned long long>(res,t.val);
+    __ser<unsigned>(res,t.val);
     res.close_field();
     res.close_struct();
 }
@@ -2131,10 +2131,10 @@ template <>
 void  __ser<craq_system::key_tups__t>(ivy_ser &res, const craq_system::key_tups__t&t){
     res.open_struct();
     res.open_field("x");
-    __ser<unsigned long long>(res,t.x);
+    __ser<unsigned>(res,t.x);
     res.close_field();
     res.open_field("y");
-    __ser<unsigned long long>(res,t.y);
+    __ser<unsigned>(res,t.y);
     res.close_field();
     res.close_struct();
 }
@@ -2164,7 +2164,7 @@ template <>
 void  __ser<craq_system::query>(ivy_ser &res, const craq_system::query&t){
     res.open_struct();
     res.open_field("qkey");
-    __ser<unsigned long long>(res,t.qkey);
+    __ser<unsigned>(res,t.qkey);
     res.close_field();
     res.open_field("qtype");
     __ser<craq_system::query_type>(res,t.qtype);
@@ -2176,10 +2176,10 @@ void  __ser<craq_system::query>(ivy_ser &res, const craq_system::query&t){
     __ser<unsigned>(res,t.qsrc);
     res.close_field();
     res.open_field("qid");
-    __ser<unsigned long long>(res,t.qid);
+    __ser<unsigned>(res,t.qid);
     res.close_field();
     res.open_field("qvnum");
-    __ser<unsigned long long>(res,t.qvnum);
+    __ser<unsigned>(res,t.qvnum);
     res.close_field();
     res.close_struct();
 }
@@ -2209,7 +2209,7 @@ void  __ser<craq_system::msg>(ivy_ser &res, const craq_system::msg&t){
     __ser<unsigned>(res,t.src);
     res.close_field();
     res.open_field("msgnum");
-    __ser<unsigned long long>(res,t.msgnum);
+    __ser<unsigned>(res,t.msgnum);
     res.close_field();
     res.open_field("body");
     __ser<craq_system::query>(res,t.body);
@@ -2274,7 +2274,7 @@ int ask_ret(long long bound) {
         }
     }
     craq_system_repl(unsigned node__size, unsigned me) : craq_system(node__size,me){}
-    virtual void imp__system__server__answer(unsigned long long k, __strlit v, unsigned long long id){
+    virtual void imp__system__server__answer(unsigned k, __strlit v, unsigned id){
     __ivy_out  << "< system.server.answer" << "(" << k << "," << v << "," << id << ")" << std::endl;
 }
 
@@ -2418,8 +2418,8 @@ void check_arity(std::vector<ivy_value> &args, unsigned num, std::string &action
 template <>
 craq_system::key_tups__t _arg<craq_system::key_tups__t>(std::vector<ivy_value> &args, unsigned idx, long long bound){
     craq_system::key_tups__t res;
-    res.x = (unsigned long long)0;
-    res.y = (unsigned long long)0;
+    res.x = (unsigned)0;
+    res.y = (unsigned)0;
     ivy_value &arg = args[idx];
     std::vector<ivy_value> tmp_args(1);
     for (unsigned i = 0; i < arg.fields.size(); i++){
@@ -2427,7 +2427,7 @@ craq_system::key_tups__t _arg<craq_system::key_tups__t>(std::vector<ivy_value> &
             tmp_args[0] = arg.fields[i].fields[0];
             if (arg.fields[i].atom == "x"){
                 try{
-                    res.x = _arg<unsigned long long>(tmp_args,0,0);
+                    res.x = _arg<unsigned>(tmp_args,0,65536);
                 }
                 catch(const out_of_bounds &err){
                     throw out_of_bounds("in field x: " + err.txt,err.pos);
@@ -2435,7 +2435,7 @@ craq_system::key_tups__t _arg<craq_system::key_tups__t>(std::vector<ivy_value> &
             }
             else if (arg.fields[i].atom == "y"){
                 try{
-                    res.y = _arg<unsigned long long>(tmp_args,0,0);
+                    res.y = _arg<unsigned>(tmp_args,0,4294967296);
                 }
                 catch(const out_of_bounds &err){
                     throw out_of_bounds("in field y: " + err.txt,err.pos);
@@ -2463,12 +2463,12 @@ craq_system::msg _arg<craq_system::msg>(std::vector<ivy_value> &args, unsigned i
     craq_system::msg res;
     res.t = (craq_system::msg_type)0;
     res.src = (unsigned)0;
-    res.msgnum = (unsigned long long)0;
-    res.body.qkey = (unsigned long long)0;
+    res.msgnum = (unsigned)0;
+    res.body.qkey = (unsigned)0;
     res.body.qtype = (craq_system::query_type)0;
     res.body.qsrc = (unsigned)0;
-    res.body.qid = (unsigned long long)0;
-    res.body.qvnum = (unsigned long long)0;
+    res.body.qid = (unsigned)0;
+    res.body.qvnum = (unsigned)0;
     ivy_value &arg = args[idx];
     std::vector<ivy_value> tmp_args(1);
     for (unsigned i = 0; i < arg.fields.size(); i++){
@@ -2492,7 +2492,7 @@ craq_system::msg _arg<craq_system::msg>(std::vector<ivy_value> &args, unsigned i
             }
             else if (arg.fields[i].atom == "msgnum"){
                 try{
-                    res.msgnum = _arg<unsigned long long>(tmp_args,0,0);
+                    res.msgnum = _arg<unsigned>(tmp_args,0,4294967296);
                 }
                 catch(const out_of_bounds &err){
                     throw out_of_bounds("in field msgnum: " + err.txt,err.pos);
@@ -2533,7 +2533,7 @@ template <>
 craq_system::msg_num__iter__t _arg<craq_system::msg_num__iter__t>(std::vector<ivy_value> &args, unsigned idx, long long bound){
     craq_system::msg_num__iter__t res;
     res.is_end = (bool)0;
-    res.val = (unsigned long long)0;
+    res.val = (unsigned)0;
     ivy_value &arg = args[idx];
     std::vector<ivy_value> tmp_args(1);
     for (unsigned i = 0; i < arg.fields.size(); i++){
@@ -2549,7 +2549,7 @@ craq_system::msg_num__iter__t _arg<craq_system::msg_num__iter__t>(std::vector<iv
             }
             else if (arg.fields[i].atom == "val"){
                 try{
-                    res.val = _arg<unsigned long long>(tmp_args,0,0);
+                    res.val = _arg<unsigned>(tmp_args,0,4294967296);
                 }
                 catch(const out_of_bounds &err){
                     throw out_of_bounds("in field val: " + err.txt,err.pos);
@@ -2575,11 +2575,11 @@ void __deser<craq_system::msg_num__iter__t>(ivy_deser &inp, craq_system::msg_num
 template <>
 craq_system::query _arg<craq_system::query>(std::vector<ivy_value> &args, unsigned idx, long long bound){
     craq_system::query res;
-    res.qkey = (unsigned long long)0;
+    res.qkey = (unsigned)0;
     res.qtype = (craq_system::query_type)0;
     res.qsrc = (unsigned)0;
-    res.qid = (unsigned long long)0;
-    res.qvnum = (unsigned long long)0;
+    res.qid = (unsigned)0;
+    res.qvnum = (unsigned)0;
     ivy_value &arg = args[idx];
     std::vector<ivy_value> tmp_args(1);
     for (unsigned i = 0; i < arg.fields.size(); i++){
@@ -2587,7 +2587,7 @@ craq_system::query _arg<craq_system::query>(std::vector<ivy_value> &args, unsign
             tmp_args[0] = arg.fields[i].fields[0];
             if (arg.fields[i].atom == "qkey"){
                 try{
-                    res.qkey = _arg<unsigned long long>(tmp_args,0,0);
+                    res.qkey = _arg<unsigned>(tmp_args,0,65536);
                 }
                 catch(const out_of_bounds &err){
                     throw out_of_bounds("in field qkey: " + err.txt,err.pos);
@@ -2619,7 +2619,7 @@ craq_system::query _arg<craq_system::query>(std::vector<ivy_value> &args, unsign
             }
             else if (arg.fields[i].atom == "qid"){
                 try{
-                    res.qid = _arg<unsigned long long>(tmp_args,0,0);
+                    res.qid = _arg<unsigned>(tmp_args,0,4294967296);
                 }
                 catch(const out_of_bounds &err){
                     throw out_of_bounds("in field qid: " + err.txt,err.pos);
@@ -2627,7 +2627,7 @@ craq_system::query _arg<craq_system::query>(std::vector<ivy_value> &args, unsign
             }
             else if (arg.fields[i].atom == "qvnum"){
                 try{
-                    res.qvnum = _arg<unsigned long long>(tmp_args,0,0);
+                    res.qvnum = _arg<unsigned>(tmp_args,0,4294967296);
                 }
                 catch(const out_of_bounds &err){
                     throw out_of_bounds("in field qvnum: " + err.txt,err.pos);
@@ -2749,19 +2749,19 @@ public:
 
                 if (action == "system.server.get") {
                     check_arity(args,1,action);
-                    ivy.ext__system__server__get(_arg<unsigned long long>(args,0,0));
+                    ivy.ext__system__server__get(_arg<unsigned>(args,0,65536));
                 }
                 else
     
                 if (action == "system.server.set") {
                     check_arity(args,2,action);
-                    ivy.ext__system__server__set(_arg<unsigned long long>(args,0,0),_arg<__strlit>(args,1,0));
+                    ivy.ext__system__server__set(_arg<unsigned>(args,0,65536),_arg<__strlit>(args,1,0));
                 }
                 else
     
                 if (action == "trans.mq.delete_all") {
                     check_arity(args,2,action);
-                    ivy.ext__trans__mq__delete_all(_arg<unsigned>(args,0,32),_arg<unsigned long long>(args,1,0));
+                    ivy.ext__trans__mq__delete_all(_arg<unsigned>(args,0,32),_arg<unsigned>(args,1,4294967296));
                 }
                 else
     

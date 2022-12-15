@@ -17,8 +17,8 @@ module seq_num = {
     }
 
     object impl = {
-	# Each sequence number instance is interpreted as a 64-bit number
-	interpret t -> bv[64]
+	# Each sequence number instance is interpreted as a 32-bit number
+	interpret t -> bv[32]
 	implement next(seq:t) returns(res:t) {
 	    res := seq + 1
 	}
