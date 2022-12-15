@@ -8,6 +8,7 @@ isolate system = {
 	function dBitMap(K: key) : bool
 	function highestVersion(K: key) : ver_num.t
 	function mvMap(K: key_tups.t) : value
+	
 	individual ver_no: ver_num.t
 	individual req_no: req_num.t
 
@@ -29,7 +30,6 @@ isolate system = {
             q.qsrc := self;
 	    q.qid := req_no;
 	    req_no := req_no.next;
-
 	    
             if self = 0 {
 		ver_no := ver_no.next;
@@ -93,6 +93,7 @@ isolate system = {
             if ~dBitMap(k) {
 		# tail always takes this branch,
 		# since its dBitMap is never changed
+		q.qvnum := highestVersion(k);
 		var rep := q;
 
 		var key_pair : key_tups.t;
@@ -152,7 +153,9 @@ isolate system = {
     invariant ~(trans.requested(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
     invariant trans.requested(R1, D1) & trans.requested(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
     invariant trans.requested(R, D) -> query.qid(R) < server(query.qsrc(R)).req_no
-    invariant trans.replied(R, D) -> query.qsrc(R) = D & query.qid(R) < server(query.qsrc(R)).req_no
+    invariant trans.replied(R, D) -> query.qid(R) < server(query.qsrc(R)).req_no
+    
+    invariant ~(trans.inquired(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
     invariant ~(trans.informed(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
     invariant trans.inquired(R, D) -> ~(query.qsrc(R) = node.max)
     invariant trans.inquired(R, D) -> query.qid(R) < server(query.qsrc(R)).req_no
@@ -169,10 +172,37 @@ isolate system = {
     invariant ~(trans.informed(R,D) & query.qsrc(R) = node.max)
     invariant ~(trans.informed(R,D) & D = node.max)
     invariant server(node.max).dBitMap(K) = false
-    invariant trans.replied(R,D) -> (query.qtype(R) = read | (query.qtype(R) = write & query.qvnum(R) <= server(node.max).highestVersion(K)))
-    # initialization does not respect implicit ordering on queries
-#    invariant (query.qid(R1) < query.qid(R2)) -> (query.qtype(R1) = read | query.qtype(R2) = read |(query.qtype(R2) = write & query.qtype(R1) = write & query.qvnum(R1) < query.qvnum(R2)))
+
+    invariant trans.replied(R,D) -> 
+    	(query.qtype(R) = read & query.qvnum(R) <= server(query.qsrc(R)).highestVersion(query.qkey(R)) 
+	| (query.qtype(R) = write & query.qvnum(R) <= server(N).highestVersion(query.qkey(R))))
     
+    # initialization does not respect implicit ordering on queries
+    invariant server(N).highestVersion(K) <= server(0).ver_no
+
+    invariant trans.inquired(R,D) -> query.qtype(R) = read
+    invariant trans.informed(R,D) -> query.qtype(R) = read
+    invariant trans.requested(R,D) -> query.qtype(R) = write
+
+    # this property isn't true for inquire messages
+    invariant trans.informed(R,D) -> query.qvnum(R) <= server(N).highestVersion(query.qkey(R))
+    invariant trans.replied(R,D) -> query.qvnum(R) <= server(N).highestVersion(query.qkey(R))
+    invariant (trans.requested(R,D) & ~(D = 0) & (N < D)) -> query.qvnum(R) <= server(N).highestVersion(query.qkey(R))
+
+    invariant ~(trans.requested(R1,D1) & trans.inquired(R2,D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
+    invariant ~(trans.requested(R1,D1) & trans.informed(R2,D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
+
+    invariant trans.informed(R1, D1) & trans.informed(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
+    invariant trans.inquired(R1, D1) & trans.inquired(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
+    invariant trans.replied(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
+
+    invariant (server(N).highestVersion(K) > server(node.max).highestVersion(K)) -> (server(N).dBitMap(K) = true)
+    invariant (0 <= N & N < M & M <= node.max) -> (server(N).highestVersion(K) >= server(M).highestVersion(K))
+
+    invariant (trans.requested(R,D) & ~(D = 0)) -> query.qvnum(R) > server(D).highestVersion(query.qkey(R))
+    invariant (trans.requested(R1,D1) & trans.requested(R2,D2) & ~(D1 = 0) & ~(D2 = 0) & ~(query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2)))
+	-> (query.qvnum(R1) ~= query.qvnum(R2))
+
 } with spec, trans, node, key_tups, req_num, ver_num
 
 export system.server.set

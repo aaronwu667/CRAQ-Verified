@@ -18,6 +18,7 @@ isolate spec = {
 	before commit(req: request_query, repl: reply_query) {
 	    require req.qtype = repl.qtype;
 	    require req.qkey = repl.qkey;
+	    require req.qsrc = repl.qsrc;
 	}
     }
     
@@ -37,6 +38,6 @@ isolate spec = {
 	    requests(req) := true;
 	    replies(repl) := true	
 	}
-    }    
+    }
     
-} with ver_num
+}

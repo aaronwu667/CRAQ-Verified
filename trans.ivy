@@ -34,12 +34,14 @@ isolate trans = {
 
         before send_request {
             assert ~requested(rq, dst);
+            assume ~(requested(R, dst) & query.qvnum(rq) <= query.qvnum(R));
             requested(rq, dst) := true;
         }
 
         before handle_request {
             assert requested(rq, dst);
             requested(rq, dst) := false;
+            assume ~(requested(R, dst) & query.qvnum(rq) >= query.qvnum(R));
         }
 
         before send_reply {
@@ -49,7 +51,6 @@ isolate trans = {
 
         before handle_reply {
             assert replied(rq, dst);
-            replied(rq, dst) := false;
         }
 
         before send_inquire {
