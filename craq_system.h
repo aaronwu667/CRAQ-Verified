@@ -32,6 +32,7 @@
 #include <map>
 #include <iterator>
 #include <fstream>
+#include <semaphore.h>
 
 namespace hash_space {
 
@@ -691,7 +692,7 @@ public:
       return hv;
     }
   };
-  enum msg_type{msg_type__request,msg_type__reply,msg_type__inquire,msg_type__inform,msg_type__commitAck,msg_type__ack};
+  enum msg_type{msg_type__request,msg_type__reply,msg_type__inquire,msg_type__inform,msg_type__commitAck,msg_type__ack,msg_type__clientRequest};
   struct msg {
     msg_type t;
     unsigned src;
@@ -732,7 +733,6 @@ public:
   tcp_listener *net__tcp__impl__rdr;             // the listener task
   tcp_callbacks *net__tcp__impl__cb;             // the callbacks to ivy
   hash_space::hash_map<int,tcp_queue *> net__tcp__impl__send_queue;   // queues of blocked packets, per socket
-
 
   tcp_config *the_tcp_config;  // the current configurations
 
@@ -798,6 +798,7 @@ public:
   virtual void ext__net__tcp__close(int s);
   virtual void net__tcp__impl__handle_connected(int s);
   virtual void ext__net__tcp__connected(int s);
+  virtual void ext__trans__handle_clientRequest(const query& rq);
   void __tick(int timeout);
 };
 inline bool operator ==(const craq_system::msg_num__iter__t &s, const craq_system::msg_num__iter__t &t){
