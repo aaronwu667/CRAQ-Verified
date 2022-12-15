@@ -89,9 +89,6 @@ isolate system = {
 
 	implement trans.handle_commitAck(rq: query){
 	    if (~(self = node.max) & highestVersion(rq.qkey) = rq.qvnum) {
-		# Need to comment this out for code extraction
-		# There's no side effect in this assume, so it's safe
-		assume rq.qvalue = server(node.max).viewMap(rq.qkey);
 		dBitMap(rq.qkey) := false;
 		viewMap(rq.qkey) := rq.qvalue
 	    }
@@ -230,6 +227,7 @@ isolate system = {
 
     invariant server(node.max).viewMap(K) = spec.map(K)
     invariant ~server(N).dBitMap(K) -> (server(N).viewMap(K) = server(node.max).viewMap(K) & server(N).viewMap(K) = spec.map(K))
+    invariant trans.acked(R,D) & server(D).highestVersion(query.qkey(R)) = query.qvnum(R) -> query.qvalue(R) = server(node.max).viewMap(query.qkey(R)) 
 
 } with spec, trans, node, key_tups, req_num, ver_num
 
