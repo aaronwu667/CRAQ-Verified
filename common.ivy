@@ -36,7 +36,7 @@ object query = {
 
 # This section needs to be completed later
 object msg_type = {
-    type this = {request, reply, inquire, inform, ack}
+    type this = {request, reply, inquire, inform, commitAck, ack}
 }
 # type msg_type = {request, reply, inquire, inform, ack}
 object msg = {

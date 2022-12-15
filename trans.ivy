@@ -13,23 +13,27 @@ isolate trans = {
     action send_reply(src:node, dst:node, rq: query)
     action send_inquire(src:node, dst:node, rq: query)
     action send_inform(src:node, dst:node, rq: query)
-
+    action send_commitAck(src:node, dst:node, rq:query)
+    
     action handle_request(dst: node, rq: query)
     action handle_reply(dst: node, rq: query)
     action handle_inquire(dst: node, rq: query)
     action handle_inform(dst: node, rq: query)
+    action handle_commitAck(dst:node, rq:query)
 
     specification {
         relation requested(R: query, N: node)
         relation replied(R: query, N: node)
         relation inquired(R: query, N: node)
         relation informed(R: query, N: node)
-
+	relation acked(R:query, N:node)
+	
         after init {
             requested(R, N) := false;
             replied(R, N) := false;
             inquired(R, N) := false;
             informed(R, N) := false;
+	    acked(R, N) := false;
         }
 
         before send_request {
@@ -40,7 +44,7 @@ isolate trans = {
 
         before handle_request {
             assert requested(rq, dst);
-	    assume ~(requested(R, dst) & query.qvnum(rq) >= query.qvnum(R));
+	    assume ~(requested(R, dst) & query.qvnum(rq) = query.qvnum(R));
             requested(rq, dst) := false;
         }
 
@@ -72,7 +76,19 @@ isolate trans = {
             assert informed(rq, dst);	    
 	    assume ~(informed(R, dst) & query.qvnum(R) >= query.qvnum(rq));
             informed(rq, dst) := false;
-        }	
+        }
+
+	before send_commitAck {
+            assert ~acked(rq, dst);
+	    assume ~(acked(R, dst) & query.qvnum(rq) <= query.qvnum(R));	    
+            acked(rq, dst) := true;
+        }
+
+        before handle_commitAck {
+            assert acked(rq, dst);
+	    assume ~(acked(R, dst) & query.qvnum(rq) = query.qvnum(R));	    
+            acked(rq, dst) := false;
+        }
     }
 
     # these type describe the format of messages
@@ -139,6 +155,17 @@ isolate trans = {
             call net.send(src, dst, m);
         }
 
+	implement send_commitAck(src: node, dst: node, rq: query) {
+            var m: msg;
+            m.t := msg_type.commitAck;
+            m.src := src;
+            m.msgnum := send_seq(src, dst);
+            m.body := rq;
+            send_seq(src, dst) := send_seq(src, dst).next;
+            call mq(src, dst).enqueue(m);
+            call net.send(src, dst, m);
+        }
+
 	# Receiving a message is the most complicated. First, we send
 	# an ack. Then, if the sequence number is correct, we call the
 	# application layer action determined by the message type.
@@ -168,6 +195,9 @@ isolate trans = {
                 else if m.t = msg_type.inform {
                     call handle_inform(dst, m.body);
                 }
+		else if m.t = msg_type.commitAck {
+		    call handle_commitAck(dst, m.body)
+		}
             }
         }
 
@@ -200,6 +230,9 @@ isolate trans = {
 	invariant mq(S, D).contents(M) & recv_seq(D, S) <= msg.msgnum(M)
         & msg.t(M) = msg_type.inform -> informed(msg.body(M), D)
 
+	invariant mq(S, D).contents(M) & recv_seq(D, S) <= msg.msgnum(M)
+        & msg.t(M) = msg_type.commitAck -> acked(msg.body(M), D)
+
 	# A given request cannot occur twice in the network
 
 	invariant mq(S1, D).contents(M1) & recv_seq(D, S1) <= msg.msgnum(M1)
@@ -226,6 +259,12 @@ isolate trans = {
         & mq(S2, D).contents(M2) & recv_seq(D, S2) <= msg.msgnum(M2)
         & (S1 ~= S2 | msg.msgnum(M1) ~= msg.msgnum(M2))
         & msg.t(M1) = msg_type.inform & msg.t(M2) = msg_type.inform
+        -> msg.body(M1) ~= msg.body(M2)
+
+	invariant mq(S1, D).contents(M1) & recv_seq(D, S1) <= msg.msgnum(M1)
+        & mq(S2, D).contents(M2) & recv_seq(D, S2) <= msg.msgnum(M2)
+        & (S1 ~= S2 | msg.msgnum(M1) ~= msg.msgnum(M2))
+        & msg.t(M1) = msg_type.commitAck & msg.t(M2) = msg_type.commitAck
         -> msg.body(M1) ~= msg.body(M2)
 	
 	# The sending seq number is greater than any queue entry

@@ -50,7 +50,8 @@ isolate system = {
 		    # tail commit
 		    viewMap(k) := v;
 		    call spec.commit(q, q);
-		    call trans.send_reply(self, self, q)
+		    call trans.send_reply(self, self, q);
+		    call trans.send_commitAck(self, self, q)
 		}
             } else {
 		call trans.send_request(self, 0, q);
@@ -80,11 +81,22 @@ isolate system = {
 		    # tail commit
 		    viewMap(rq.qkey) := rq.qvalue;
 		    call spec.commit(rq, rq);
-		    call trans.send_reply(self, self, rq)
+		    call trans.send_reply(self, self, rq);
+		    call trans.send_commitAck(self, self, rq)		    
 		}
 	    }
 	}
 
+	implement trans.handle_commitAck(rq: query){
+	    if (~(self = node.max) & highestVersion(rq.qkey) = rq.qvnum) {
+		assume rq.qvalue = server(node.max).viewMap(rq.qkey);
+		dBitMap(rq.qkey) := false;
+		viewMap(rq.qkey) := rq.qvalue
+	    }
+	    if ~(self=0:node) {
+		call trans.send_commitAck(self, self.prev, rq)
+	    }
+	}
 	
 	implement get(k:key) {
             var q: query;
@@ -161,6 +173,8 @@ isolate system = {
     invariant ~(trans.requested(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
     invariant trans.requested(R1, D1) & trans.requested(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
     invariant trans.requested(R, D) -> query.qid(R) < server(query.qsrc(R)).req_no
+    invariant trans.acked(R,D) -> query.qid(R) < server(query.qsrc(R)).req_no
+    invariant trans.acked(R,D) -> query.qvnum(R) <= server(node.max).highestVersion(query.qkey(R))
     invariant trans.replied(R, D) -> query.qid(R) < server(query.qsrc(R)).req_no
     
     invariant ~(trans.inquired(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
@@ -191,6 +205,7 @@ isolate system = {
     invariant trans.inquired(R,D) -> query.qtype(R) = read
     invariant trans.informed(R,D) -> query.qtype(R) = read
     invariant trans.requested(R,D) -> query.qtype(R) = write
+    invariant trans.acked(R,D) -> query.qtype(R) = write
 
     # this property isn't true for inquire messages
     invariant trans.informed(R,D) -> query.qvnum(R) <= server(N).highestVersion(query.qkey(R))
@@ -204,14 +219,15 @@ isolate system = {
     invariant trans.inquired(R1, D1) & trans.inquired(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
     invariant trans.replied(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
 
-    invariant (server(N).highestVersion(K) > server(node.max).highestVersion(K)) -> (server(N).dBitMap(K) = true)
-    invariant (0 <= N & N < M & M <= node.max) -> (server(N).highestVersion(K) >= server(M).highestVersion(K))
+    invariant [issue1] (server(N).highestVersion(K) > server(node.max).highestVersion(K)) -> (server(N).dBitMap(K) = true)
+    invariant [issue2] (0 <= N & N < M & M <= node.max) -> (server(N).highestVersion(K) >= server(M).highestVersion(K))
 
     invariant (trans.requested(R,D) & ~(D = 0)) -> query.qvnum(R) > server(D).highestVersion(query.qkey(R))
     invariant (trans.requested(R1,D1) & trans.requested(R2,D2) & ~(D1 = 0) & ~(D2 = 0) & ~(query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2)))
     -> (query.qvnum(R1) ~= query.qvnum(R2))
 
-    invariant ~server(N).dBitMap(K) -> (server(N).viewMap(K) = spec.map(K))
+    invariant server(node.max).viewMap(K) = spec.map(K)
+    invariant ~server(N).dBitMap(K) -> (server(N).viewMap(K) = server(node.max).viewMap(K) & server(N).viewMap(K) = spec.map(K))
 
 } with spec, trans, node, key_tups, req_num, ver_num
 
