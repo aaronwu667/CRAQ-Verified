@@ -10,7 +10,45 @@ instance ver_num : seq_num
 instance req_num : seq_num
 instance msg_num : seq_num
 
-instance node : iterable
+module iterableExtract = {
+
+    instantiate bounded_sequence_spec
+
+    instance iter : sequence_iterator(this)
+    isolate iso_iter = iter with this
+
+    individual max : t
+
+    specification {
+        property 0 <= X:t & X <= max
+    }
+
+    implementation {
+        parameter size : t
+        interpret t -> bv[16]
+        definition 0:t = <<< 0 >>>
+        definition max = <<< `size` - 1 >>>
+        
+        implement next(x:t) returns (y:t) {
+            <<< y = x + 1; >>>
+        }
+        implement prev(x:t) returns (y:t) {
+            <<< y = x - 1; >>>
+        }
+        implement is_max(x:t) returns (r:bool) {
+            <<< r = (x == `size` - 1); >>>
+        }
+    }
+    
+    trusted isolate iso = this
+    attribute cardinality = size
+
+    # When testing, use the integer implementation.
+
+    attribute test = impl
+}
+
+instance node : iterableExtract
 
 # Likely not possible to have key |-> (dBit, ordered_map) in ivy
 # Flatten and have ordered map (key, ver_num) |-> value and function key |-> dBit

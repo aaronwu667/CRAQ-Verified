@@ -89,6 +89,8 @@ isolate system = {
 
 	implement trans.handle_commitAck(rq: query){
 	    if (~(self = node.max) & highestVersion(rq.qkey) = rq.qvnum) {
+		# Need to comment this out for code extraction
+		# There's no side effect in this assume, so it's safe
 		assume rq.qvalue = server(node.max).viewMap(rq.qkey);
 		dBitMap(rq.qkey) := false;
 		viewMap(rq.qkey) := rq.qvalue
@@ -234,4 +236,4 @@ isolate system = {
 export system.server.set
 export system.server.get
 
-extract impl(me: node) = system.server(me), trans(me), net(me), node, impl_interp, ver_num, req_num
+extract impl(me: node) = system.server(me), trans(me), net(me), node, impl_interp, ver_num, req_num, msg_num
