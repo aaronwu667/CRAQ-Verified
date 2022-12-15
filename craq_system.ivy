@@ -8,7 +8,7 @@ isolate system = {
 	function dBitMap(K: key) : bool
 	function highestVersion(K: key) : ver_num.t
 	function mvMap(K: key_tups.t) : value
-	
+	function viewMap(K: key) : value
 	individual ver_no: ver_num.t
 	individual req_no: req_num.t
 
@@ -20,6 +20,8 @@ isolate system = {
 	after init {
 	    dBitMap(K) := false;
 	    highestVersion(K) := 0;
+	    mvMap(K) := 0;
+	    viewMap(K) := 0;
 	}
 
 	implement set(k: key, v: value) {
@@ -46,6 +48,7 @@ isolate system = {
 		    call trans.send_request(self, self.next, q);
 		} else {
 		    # tail commit
+		    viewMap(k) := v;
 		    call spec.commit(q, q);
 		    call trans.send_reply(self, self, q)
 		}
@@ -75,6 +78,7 @@ isolate system = {
 		    call trans.send_request(self, self.next, rq)
 		} else {
 		    # tail commit
+		    viewMap(rq.qkey) := rq.qvalue;
 		    call spec.commit(rq, rq);
 		    call trans.send_reply(self, self, rq)
 		}
@@ -101,7 +105,8 @@ isolate system = {
 		key_pair.y := highestVersion(k);
 
 		# 0 is the default value
-		rep.qvalue := mvMap(key_pair);
+		#rep.qvalue := mvMap(key_pair);
+		rep.qvalue := viewMap(k);
 
 		call spec.commit(q, rep);
 		call trans.send_reply(self, self, rep);
@@ -116,6 +121,7 @@ isolate system = {
         }
 
 	implement trans.handle_inform(rq: query) {
+	    assume dBitMap(rq.qkey) = true;
 	    var rep : query;
 	    rep.qkey := rq.qkey;
 	    rep.qtype := rq.qtype;
@@ -129,8 +135,10 @@ isolate system = {
 	    var key_pair : key_tups.t;
 	    key_pair.x := rq.qkey;
 	    key_pair.y := rq.qvnum;
+
+	    viewMap(rq.qkey) := mvMap(key_pair);
+	    rep.qvalue := viewMap(rq.qkey);
 	    
-	    rep.qvalue := mvMap(key_pair);
 	    call spec.commit(rep, rep);
 	    call trans.send_reply(self, self, rep)
 	}
@@ -174,8 +182,8 @@ isolate system = {
     invariant server(node.max).dBitMap(K) = false
 
     invariant trans.replied(R,D) -> 
-    	(query.qtype(R) = read & query.qvnum(R) <= server(query.qsrc(R)).highestVersion(query.qkey(R)) 
-	| (query.qtype(R) = write & query.qvnum(R) <= server(N).highestVersion(query.qkey(R))))
+    (query.qtype(R) = read & query.qvnum(R) <= server(query.qsrc(R)).highestVersion(query.qkey(R)) 
+    | (query.qtype(R) = write & query.qvnum(R) <= server(N).highestVersion(query.qkey(R))))
     
     # initialization does not respect implicit ordering on queries
     invariant server(N).highestVersion(K) <= server(0).ver_no
@@ -201,7 +209,9 @@ isolate system = {
 
     invariant (trans.requested(R,D) & ~(D = 0)) -> query.qvnum(R) > server(D).highestVersion(query.qkey(R))
     invariant (trans.requested(R1,D1) & trans.requested(R2,D2) & ~(D1 = 0) & ~(D2 = 0) & ~(query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2)))
-	-> (query.qvnum(R1) ~= query.qvnum(R2))
+    -> (query.qvnum(R1) ~= query.qvnum(R2))
+
+    invariant ~server(N).dBitMap(K) -> (server(N).viewMap(K) = spec.map(K))
 
 } with spec, trans, node, key_tups, req_num, ver_num
 

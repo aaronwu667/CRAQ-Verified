@@ -40,8 +40,8 @@ isolate trans = {
 
         before handle_request {
             assert requested(rq, dst);
+	    assume ~(requested(R, dst) & query.qvnum(rq) >= query.qvnum(R));
             requested(rq, dst) := false;
-            assume ~(requested(R, dst) & query.qvnum(rq) >= query.qvnum(R));
         }
 
         before send_reply {
@@ -69,7 +69,8 @@ isolate trans = {
         }
 
         before handle_inform {
-            assert informed(rq, dst);
+            assert informed(rq, dst);	    
+	    assume ~(informed(R, dst) & query.qvnum(R) >= query.qvnum(rq));
             informed(rq, dst) := false;
         }	
     }
