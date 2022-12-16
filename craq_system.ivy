@@ -91,10 +91,10 @@ isolate system = {
 	    if (~(self = node.max) & highestVersion(rq.qkey) = rq.qvnum) {
 		dBitMap(rq.qkey) := false;
 		viewMap(rq.qkey) := rq.qvalue
-	    }
-	    if ~(self=0:node) {
+	    };
+	    if ~(self=0) {
 		call trans.send_commitAck(self, self.prev, rq)
-	    }
+	    };
 	}
 	
 	implement get(k:key) {
@@ -168,15 +168,17 @@ isolate system = {
     invariant [safety] trans.replied(R, D) -> spec.replies(R)
 
     # Manually added invariants from SHT
-    invariant ~(trans.requested(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
     invariant trans.requested(R1, D1) & trans.requested(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
     invariant trans.requested(R, D) -> query.qid(R) < server(query.qsrc(R)).req_no
     invariant trans.acked(R,D) -> query.qid(R) < server(query.qsrc(R)).req_no
     invariant trans.acked(R,D) -> query.qvnum(R) <= server(node.max).highestVersion(query.qkey(R))
     invariant trans.replied(R, D) -> query.qid(R) < server(query.qsrc(R)).req_no
     
+    # replies correspond to a specific request/inquire/inform
+    invariant ~(trans.requested(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
     invariant ~(trans.inquired(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
     invariant ~(trans.informed(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
+    
     invariant trans.inquired(R, D) -> ~(query.qsrc(R) = node.max)
     invariant trans.inquired(R, D) -> query.qid(R) < server(query.qsrc(R)).req_no
     invariant trans.inquired(R,D) -> D = node.max
@@ -187,7 +189,6 @@ isolate system = {
     invariant (forall R1.(spec.requests(R1) -> (query.qid(R1) < system.server.req_no(query.qsrc(R1)))))
     invariant (forall N1, R1.(trans.requested(R1, N1) -> ((read = query.qtype(R1)) | (write = query.qtype(R1)) | (read = write))))
 
-    # Additional manually added invariants
     invariant trans.informed(R,D) -> query.qid(R) < server(query.qsrc(R)).req_no
     invariant ~(trans.informed(R,D) & query.qsrc(R) = node.max)
     invariant ~(trans.informed(R,D) & D = node.max)
@@ -200,32 +201,47 @@ isolate system = {
     # initialization does not respect implicit ordering on queries
     invariant server(N).highestVersion(K) <= server(0).ver_no
 
+    # certain messages only correspond to certain query types
     invariant trans.inquired(R,D) -> query.qtype(R) = read
     invariant trans.informed(R,D) -> query.qtype(R) = read
     invariant trans.requested(R,D) -> query.qtype(R) = write
     invariant trans.acked(R,D) -> query.qtype(R) = write
 
+    # the version number in a request is restricted by the highest version numbers on servers
     # this property isn't true for inquire messages
     invariant trans.informed(R,D) -> query.qvnum(R) <= server(N).highestVersion(query.qkey(R))
     invariant trans.replied(R,D) -> query.qvnum(R) <= server(N).highestVersion(query.qkey(R))
     invariant (trans.requested(R,D) & ~(D = 0) & (N < D)) -> query.qvnum(R) <= server(N).highestVersion(query.qkey(R))
 
+    # cannot have both inquire/inform and request messages for the same query since they handle different tasks
     invariant ~(trans.requested(R1,D1) & trans.inquired(R2,D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
     invariant ~(trans.requested(R1,D1) & trans.informed(R2,D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2))
 
+    # uniqueness of messages
     invariant trans.informed(R1, D1) & trans.informed(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
     invariant trans.inquired(R1, D1) & trans.inquired(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
     invariant trans.replied(R1, D1) & trans.replied(R2, D2) & query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2) -> R1 = R2 & D1 = D2
 
-    invariant [issue1] (server(N).highestVersion(K) > server(node.max).highestVersion(K)) -> (server(N).dBitMap(K) = true)
-    invariant [issue2] (0 <= N & N < M & M <= node.max) -> (server(N).highestVersion(K) >= server(M).highestVersion(K))
+    # a higher version number than that on the tail implies the dirty bit is true
+    invariant (server(N).highestVersion(K) > server(node.max).highestVersion(K)) -> (server(N).dBitMap(K) = true)
 
+    # highest version number is monotonically nonincreasing from the head to the tail
+    invariant (0 <= N & N < M & M <= node.max) -> (server(N).highestVersion(K) >= server(M).highestVersion(K))
+
+    # request query numbers being propagated along the chain must be bringing in new information
     invariant (trans.requested(R,D) & ~(D = 0)) -> query.qvnum(R) > server(D).highestVersion(query.qkey(R))
+
+    # cannot have two request message in the network with the same version number
     invariant (trans.requested(R1,D1) & trans.requested(R2,D2) & ~(D1 = 0) & ~(D2 = 0) & ~(query.qsrc(R1) = query.qsrc(R2) & query.qid(R1) = query.qid(R2)))
     -> (query.qvnum(R1) ~= query.qvnum(R2))
 
+    # tail determines commitment
     invariant server(node.max).viewMap(K) = spec.map(K)
+
+    # if dirty bit is false, then the corresponding value is committed
     invariant ~server(N).dBitMap(K) -> (server(N).viewMap(K) = server(node.max).viewMap(K) & server(N).viewMap(K) = spec.map(K))
+    
+    # if an entry is acknowledged and remains the highest version number, then the corresponding value is the most recent committed write to the key
     invariant trans.acked(R,D) & server(D).highestVersion(query.qkey(R)) = query.qvnum(R) -> query.qvalue(R) = server(node.max).viewMap(query.qkey(R)) 
 
 } with spec, trans, node, key_tups, req_num, ver_num
