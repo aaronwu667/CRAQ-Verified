@@ -8,20 +8,14 @@
 #include <sys/types.h>          /* See NOTES */
 #include <sys/stat.h>
 #include <fcntl.h>
-#ifdef _WIN32
-#include <winsock2.h>
-#include <WS2tcpip.h>
-#include <io.h>
-#define isatty _isatty
-#else
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h> 
 #include <sys/select.h>
 #include <unistd.h>
+#include "config.h"
 #define _open open
 #define _dup2 dup2
-#endif
 #include <string.h>
 #include <stdio.h>
 #include <string>
@@ -51,27 +45,7 @@ public:
   virtual ~timer() {}
 };
 
-#ifdef _WIN32
-DWORD WINAPI ReaderThreadFunction( LPVOID lpParam ) 
-{
-  reader *cr = (reader *) lpParam;
-  cr->bind();
-  while (true)
-    cr->read();
-  return 0;
-} 
 
-DWORD WINAPI TimerThreadFunction( LPVOID lpParam ) 
-{
-  timer *cr = (timer *) lpParam;
-  while (true) {
-    int ms = cr->ms_delay();
-    Sleep(ms);
-    cr->timeout(ms);
-  }
-  return 0;
-} 
-#else
 void * _thread_reader(void *rdr_void) {
   reader *rdr = (reader *) rdr_void;
   rdr->bind();
@@ -95,25 +69,8 @@ void * _thread_timer( void *tmr_void )
   }
   return 0;
 } 
-#endif 
 
 void craq_system::install_reader(reader *r) {
-#ifdef _WIN32
-
-  DWORD dummy;
-  HANDLE h = CreateThread( 
-			  NULL,                   // default security attributes
-			  0,                      // use default stack size  
-			  ReaderThreadFunction,   // thread function name
-			  r,                      // argument to thread function 
-			  0,                      // use default creation flags 
-			  &dummy);                // returns the thread identifier
-  if (h == NULL) {
-    std::cerr << "failed to create thread" << std::endl;
-    exit(1);
-  }
-  thread_ids.push_back(h);
-#else
   pthread_t thread;
   int res = pthread_create(&thread, NULL, _thread_reader, r);
   if (res) {
@@ -121,7 +78,6 @@ void craq_system::install_reader(reader *r) {
     exit(1);
   }
   thread_ids.push_back(thread);
-#endif
 }      
 
 void craq_system::install_thread(reader *r) {
@@ -129,22 +85,6 @@ void craq_system::install_thread(reader *r) {
 }
 
 void craq_system::install_timer(timer *r) {
-#ifdef _WIN32
-
-  DWORD dummy;
-  HANDLE h = CreateThread( 
-			  NULL,                   // default security attributes
-			  0,                      // use default stack size  
-			  TimersThreadFunction,   // thread function name
-			  r,                      // argument to thread function 
-			  0,                      // use default creation flags 
-			  &dummy);                // returns the thread identifier
-  if (h == NULL) {
-    std::cerr << "failed to create thread" << std::endl;
-    exit(1);
-  }
-  thread_ids.push_back(h);
-#else
   pthread_t thread;
   int res = pthread_create(&thread, NULL, _thread_timer, r);
   if (res) {
@@ -152,17 +92,12 @@ void craq_system::install_timer(timer *r) {
     exit(1);
   }
   thread_ids.push_back(thread);
-#endif
 }      
 
 
-#ifdef _WIN32
-void craq_system::__lock() { WaitForSingleObject(mutex,INFINITE); }
-void craq_system::__unlock() { ReleaseMutex(mutex); }
-#else
 void craq_system::__lock() { pthread_mutex_lock(&mutex); }
 void craq_system::__unlock() { pthread_mutex_unlock(&mutex); }
-#endif
+
 struct thunk__net__tcp__impl__handle_accept{
   craq_system *__ivy;
   thunk__net__tcp__impl__handle_accept(craq_system *__ivy): __ivy(__ivy){}
@@ -197,6 +132,13 @@ struct thunk__trans__timer__impl__handle_timeout{
   thunk__trans__timer__impl__handle_timeout(craq_system *__ivy, unsigned prm__D): __ivy(__ivy),prm__D(prm__D){}
   void operator()() const {
     return __ivy->trans__timer__impl__handle_timeout(prm__D);
+  }
+};
+struct thunk__net__impl__handle_recv{
+  craq_system *__ivy;
+  thunk__net__impl__handle_recv(craq_system *__ivy): __ivy(__ivy){}
+  void operator()(craq_system::msg x) const {
+    __ivy->net__tcp__impl__handle_recv(-1,x);
   }
 };
 
@@ -676,17 +618,10 @@ void  __deser<craq_system::query>(ivy_deser &inp, craq_system::query &res);
 #define MAX_TCP_SEND_QUEUE 16
 
 struct tcp_mutex {
-#ifdef _WIN32
-  HANDLE mutex;
-  tcp_mutex() { mutex = CreateMutex(NULL,FALSE,NULL); }
-  void lock() { WaitForSingleObject(mutex,INFINITE); }
-  void unlock() { ReleaseMutex(mutex); }
-#else
   pthread_mutex_t mutex;
   tcp_mutex() { pthread_mutex_init(&mutex,NULL); }
   void lock() { pthread_mutex_lock(&mutex); }
   void unlock() { pthread_mutex_unlock(&mutex); }
-#endif
 };
 
 struct tcp_sem {
@@ -777,12 +712,8 @@ public:
 // The default configuration gives address 127.0.0.1 and port port_base + id.
 
 void tcp_config::get(int id, unsigned long &inetaddr, unsigned long &inetport) {
-#ifdef _WIN32
-  inetaddr = ntohl(inet_addr("127.0.0.1")); // can't send to INADDR_ANY in windows
-#else
   inetaddr = INADDR_ANY;
-#endif
-  inetport = 5990+ id;
+  inetport = 4990 + id;
 }
 
 // This reverses the default configuration's map. Note, this is a little dangerous
@@ -790,7 +721,7 @@ void tcp_config::get(int id, unsigned long &inetaddr, unsigned long &inetport) {
 // no way to know the correct range of endpoint ids.
 
 int tcp_config::rev(unsigned long inetaddr, unsigned long inetport) {
-  return inetport - 5990; // don't use this for real, it's vulnerable
+  return inetport - 4990; // don't use this for real, it's vulnerable
 }
 
 // construct a sockaddr_in for a specified process id using the configuration
@@ -801,7 +732,7 @@ void get_tcp_addr(ivy_class *ivy, int my_id, sockaddr_in &myaddr) {
   unsigned long inetport;
   ivy->get_tcp_config() -> get(my_id,inetaddr,inetport);
   myaddr.sin_family = AF_INET;
-  myaddr.sin_addr.s_addr = htonl(inetaddr);
+  myaddr.sin_addr.s_addr = inet_addr(server_map.at(my_id));
   myaddr.sin_port = htons(inetport);
 }
 
@@ -832,11 +763,13 @@ struct tcp_callbacks {
   thunk__net__tcp__impl__handle_recv rcb;
   thunk__net__tcp__impl__handle_fail fcb;
   thunk__net__tcp__impl__handle_connected ccb;
+  thunk__net__impl__handle_recv rccb;
   tcp_callbacks(const thunk__net__tcp__impl__handle_accept &acb,
 		const thunk__net__tcp__impl__handle_recv &rcb,
 		const thunk__net__tcp__impl__handle_fail &fcb,
-		const thunk__net__tcp__impl__handle_connected ccb)
-    : acb(acb), rcb(rcb), fcb(fcb), ccb(ccb) {}
+		const thunk__net__tcp__impl__handle_connected ccb,
+		const thunk__net__impl__handle_recv rccb)
+    : acb(acb), rcb(rcb), fcb(fcb), ccb(ccb), rccb(rccb) {}
 };
 
 // This is a general class for an asynchronous task. These objects are called in a loop
@@ -863,6 +796,132 @@ public:
 
 };
 
+// Task reads messages from a client-facing socket and invokes "recv" callback.
+class udp_reader : public reader {
+  int sock;
+  int my_id;
+  thunk__net__impl__handle_recv rcb;
+  ivy_class *ivy;
+  bool bound;
+public:
+  udp_reader(int _my_id, thunk__net__impl__handle_recv rcb, ivy_class *ivy)
+    : my_id(_my_id), rcb(rcb), ivy(ivy), bound(false) {
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0)
+      { std::cerr << "cannot create socket\n"; exit(1); }
+
+  }
+  void bind_int() {
+    if (!bound) {
+      struct sockaddr_in myaddr;
+      get_addr_dyno(my_id,myaddr);
+      std::cout << "********binding id: " << my_id << " port: " << ntohs(myaddr.sin_port) << std::endl;
+      if (::bind(sock, (struct sockaddr *)&myaddr, sizeof(myaddr)) < 0)
+	{ std::cerr << "bind failed\n"; exit(1); }
+    }
+    bound = true;
+  }
+                    
+  virtual void bind() {
+    ivy -> __lock();  // can be asynchronous, so must lock ivy!
+    bind_int();
+    ivy -> __unlock();
+  }
+  virtual ~udp_reader() {
+    close(sock);
+  }
+  virtual void get_addr(int my_id, sockaddr_in &myaddr) {
+    memset((char *)&myaddr, 0, sizeof(myaddr));
+    unsigned long inetaddr;
+    unsigned long inetport;
+    myaddr.sin_family = AF_INET;
+    myaddr.sin_addr.s_addr = htonl(inetaddr);
+    myaddr.sin_port = htons(5990+42);
+  }
+
+  virtual int fdes() {
+    return sock;
+  }
+      
+      
+  virtual void get_addr_dyno(int my_id, sockaddr_in &myaddr) {
+    memset((char *)&myaddr, 0, sizeof(myaddr));
+    unsigned long inetaddr;
+    unsigned long inetport;
+    myaddr.sin_family = AF_INET;
+    // this should change if running over multiple machines
+    myaddr.sin_addr.s_addr = inetaddr;
+    if(my_id == -1){
+      myaddr.sin_port = htons(4942); // random port for server frontend (could be anything)
+    }else{
+      myaddr.sin_port = htons(4990 + my_id);
+    }
+    
+    const char *addr = server_map.at(my_id);
+    if (inet_aton(addr, &myaddr.sin_addr)==0) {
+      fprintf(stderr, "inet_aton() failed\n");
+      exit(1);
+    }
+
+  }
+      
+      
+  virtual void read() {    
+    int len=0;
+    socklen_t lenlen=4;
+    if (getsockopt(sock,SOL_SOCKET,SO_RCVBUF,&len,&lenlen))
+      { perror("getsockopt failed"); exit(1); }
+    std::vector<char> buf(len);
+    int bytes;
+    if ((bytes = recvfrom(sock,&buf[0],len,0,0,0)) < 0)
+      { std::cerr << "recvfrom failed\n"; exit(1); }
+    buf.resize(bytes);
+    craq_system::msg pkt;
+    try {
+      ivy_binary_deser ds(buf);
+      __deser(ds,pkt);
+      buf.clear(); 
+      if (ds.pos < buf.size())
+	throw deser_err();
+    } catch (deser_err &){
+      std::cout << "BAD PACKET RECEIVED " << sock << "\n";
+      return;
+    }
+    ivy->__lock();
+    rcb(pkt);
+    ivy->__unlock();
+  }
+  
+  virtual void write(int dst, craq_system::msg pkt) {
+    bind_int();
+    struct sockaddr_in dstaddr;
+    get_addr_dyno(dst,dstaddr);
+    ivy_binary_ser sr;
+    __ser(sr,pkt);
+    if (sendto(sock,&sr.res[0],sr.res.size(),0,(sockaddr *)&dstaddr,sizeof(sockaddr_in)) < 0) 
+      { std::cerr << "sendto failed\n"; exit(1); }
+      
+  }
+      
+      
+      
+  virtual void writeToFRONTEND(int dst, craq_system::msg pkt) {
+    bind_int();          
+    struct sockaddr_in dstaddr;
+    ivy_binary_ser sr;
+    __ser(sr,pkt);
+
+    struct sockaddr_in serveraddr;
+    get_addr_dyno(-1,serveraddr);
+
+    if (sendto(sock,&sr.res[0],sr.res.size(),0,(sockaddr *)&serveraddr,sizeof(sockaddr_in)) < 0)
+      { std::cerr << "sendto failed\n"; exit(1); }
+                  
+  }
+      
+      
+      
+};
 
 // This task reads messages from a socket and calls the "recv" callback.
 
@@ -1233,6 +1292,13 @@ void craq_system::ext__trans__handle_request(const query& rq){
     }
   }
 }
+void craq_system::ext__trans__handle_clientRequest(const query& rq){
+  if((rq.qtype == write)){
+    ext__system__server__set(rq.qkey, rq.qvalue);
+  } else {
+    ext__system__server__get(rq.qkey);
+  }
+}
 void craq_system::ext__system__server__get(unsigned k){
   {
     {
@@ -1350,66 +1416,59 @@ unsigned craq_system::ext__node__prev(unsigned x){
   return y;
 }
 void craq_system::ext__net__recv(const msg& v){
-  {
+  std::cout<<v.t;
+  unsigned loc__seq;
+  unsigned loc__src;
+
+  loc__seq = v.msgnum; 
+  loc__src = v.src;
+  if(v.t == msg_type__clientRequest) {
+    ext__trans__handle_clientRequest(v.body);
+  }
+  if((((loc__seq < trans__recv_seq[loc__src]) || (loc__seq == trans__recv_seq[loc__src])) && !(v.t == msg_type__ack))){
     {
-      unsigned loc__seq;
-      loc__seq = (unsigned)___ivy_choose(0,"loc:seq",619);
+      msg loc__ack;
+      loc__ack.t = (msg_type)___ivy_choose(0,"loc:ack",617);
+      loc__ack.src = (unsigned)___ivy_choose(0,"loc:ack",617);
+      loc__ack.msgnum = (unsigned)___ivy_choose(0,"loc:ack",617);
+      loc__ack.body.qkey = (unsigned)___ivy_choose(0,"loc:ack",617);
+      loc__ack.body.qtype = (query_type)___ivy_choose(0,"loc:ack",617);
+      loc__ack.body.qsrc = (unsigned)___ivy_choose(0,"loc:ack",617);
+      loc__ack.body.qid = (unsigned)___ivy_choose(0,"loc:ack",617);
+      loc__ack.body.qvnum = (unsigned)___ivy_choose(0,"loc:ack",617);
       {
-	loc__seq = v.msgnum;
-	{
-	  unsigned loc__src;
-	  loc__src = (unsigned)___ivy_choose(0,"loc:src",618);
-	  {
-	    loc__src = v.src;
-	    if((((loc__seq < trans__recv_seq[loc__src]) || (loc__seq == trans__recv_seq[loc__src])) && !(v.t == msg_type__ack))){
-	      {
-		msg loc__ack;
-		loc__ack.t = (msg_type)___ivy_choose(0,"loc:ack",617);
-		loc__ack.src = (unsigned)___ivy_choose(0,"loc:ack",617);
-		loc__ack.msgnum = (unsigned)___ivy_choose(0,"loc:ack",617);
-		loc__ack.body.qkey = (unsigned)___ivy_choose(0,"loc:ack",617);
-		loc__ack.body.qtype = (query_type)___ivy_choose(0,"loc:ack",617);
-		loc__ack.body.qsrc = (unsigned)___ivy_choose(0,"loc:ack",617);
-		loc__ack.body.qid = (unsigned)___ivy_choose(0,"loc:ack",617);
-		loc__ack.body.qvnum = (unsigned)___ivy_choose(0,"loc:ack",617);
-		{
-		  loc__ack.t = msg_type__ack;
-		  loc__ack.src = me;
-		  loc__ack.msgnum = loc__seq;
-		  ext__net__send(loc__src, loc__ack);
-		}
-	      }
-	    }
-	    if((v.t == msg_type__ack)){
-	      ext__trans__mq__delete_all(loc__src, loc__seq);
+	loc__ack.t = msg_type__ack;
+	loc__ack.src = me;
+	loc__ack.msgnum = loc__seq;
+	ext__net__send(loc__src, loc__ack);
+      }
+    }
+  }
+  if((v.t == msg_type__ack)){
+    ext__trans__mq__delete_all(loc__src, loc__seq);
+  }
+  else {
+    if((loc__seq == trans__recv_seq[loc__src])){
+      {
+	trans__recv_seq[loc__src] = ext__msg_num__next(trans__recv_seq[loc__src]);
+	if((v.t == msg_type__request)){
+	  ext__trans__handle_request(v.body);
+	}
+	else {
+	  if((v.t == msg_type__reply)){
+	    ext__trans__handle_reply(v.body);
+	  }
+	  else {
+	    if((v.t == msg_type__inquire)){
+	      ext__trans__handle_inquire(v.body);
 	    }
 	    else {
-	      if((loc__seq == trans__recv_seq[loc__src])){
-		{
-		  trans__recv_seq[loc__src] = ext__msg_num__next(trans__recv_seq[loc__src]);
-		  if((v.t == msg_type__request)){
-		    ext__trans__handle_request(v.body);
-		  }
-		  else {
-		    if((v.t == msg_type__reply)){
-		      ext__trans__handle_reply(v.body);
-		    }
-		    else {
-		      if((v.t == msg_type__inquire)){
-			ext__trans__handle_inquire(v.body);
-		      }
-		      else {
-			if((v.t == msg_type__inform)){
-			  ext__trans__handle_inform(v.body);
-			}
-			else {
-			  if((v.t == msg_type__commitAck)){
-			    ext__trans__handle_commitAck(v.body);
-			  }
-			}
-		      }
-		    }
-		  }
+	      if((v.t == msg_type__inform)){
+		ext__trans__handle_inform(v.body);
+	      }
+	      else {
+		if((v.t == msg_type__commitAck)){
+		  ext__trans__handle_commitAck(v.body);
 		}
 	      }
 	    }
@@ -1417,8 +1476,9 @@ void craq_system::ext__net__recv(const msg& v){
 	}
       }
     }
-  }
+  }    
 }
+
 void craq_system::ext__trans__handle_reply(const query& rq){
   {
     ext__system__server__answer(rq.qkey, rq.qvalue, rq.qid);
@@ -1827,37 +1887,35 @@ void craq_system::ext__net__send(unsigned dst, const msg& v){
 }
 void craq_system::ext__trans__handle_inform(const query& rq){
   {
-    ivy_assume((system__server__dBitMap[rq.qkey] == true), "craq_system.ivy: line 135");
+    query loc__rep;
+    loc__rep.qkey = (unsigned)___ivy_choose(0,"loc:rep",636);
+    loc__rep.qtype = (query_type)___ivy_choose(0,"loc:rep",636);
+    loc__rep.qsrc = (unsigned)___ivy_choose(0,"loc:rep",636);
+    loc__rep.qid = (unsigned)___ivy_choose(0,"loc:rep",636);
+    loc__rep.qvnum = (unsigned)___ivy_choose(0,"loc:rep",636);
     {
-      query loc__rep;
-      loc__rep.qkey = (unsigned)___ivy_choose(0,"loc:rep",636);
-      loc__rep.qtype = (query_type)___ivy_choose(0,"loc:rep",636);
-      loc__rep.qsrc = (unsigned)___ivy_choose(0,"loc:rep",636);
-      loc__rep.qid = (unsigned)___ivy_choose(0,"loc:rep",636);
-      loc__rep.qvnum = (unsigned)___ivy_choose(0,"loc:rep",636);
+      loc__rep.qkey = rq.qkey;
+      loc__rep.qtype = rq.qtype;
+      loc__rep.qsrc = rq.qsrc;
+      loc__rep.qid = rq.qid;
+      loc__rep.qvnum = rq.qvnum;
+      if((system__server__highestVersion[rq.qkey] == rq.qvnum)){
+	system__server__dBitMap[rq.qkey] = false;
+      }
       {
-	loc__rep.qkey = rq.qkey;
-	loc__rep.qtype = rq.qtype;
-	loc__rep.qsrc = rq.qsrc;
-	loc__rep.qid = rq.qid;
-	loc__rep.qvnum = rq.qvnum;
-	if((system__server__highestVersion[rq.qkey] == rq.qvnum)){
-	  system__server__dBitMap[rq.qkey] = false;
-	}
+	key_tups__t loc__key_pair;
+	loc__key_pair.x = (unsigned)___ivy_choose(0,"loc:key_pair",635);
+	loc__key_pair.y = (unsigned)___ivy_choose(0,"loc:key_pair",635);
 	{
-	  key_tups__t loc__key_pair;
-	  loc__key_pair.x = (unsigned)___ivy_choose(0,"loc:key_pair",635);
-	  loc__key_pair.y = (unsigned)___ivy_choose(0,"loc:key_pair",635);
-	  {
-	    loc__key_pair.x = rq.qkey;
-	    loc__key_pair.y = rq.qvnum;
-	    system__server__viewMap[rq.qkey] = system__server__mvMap[loc__key_pair];
-	    loc__rep.qvalue = system__server__viewMap[rq.qkey];
-	    ext__spec__commit(loc__rep, loc__rep);
-	    ext__trans__send_reply(me, loc__rep);
-	  }
+	  loc__key_pair.x = rq.qkey;
+	  loc__key_pair.y = rq.qvnum;
+	  system__server__viewMap[rq.qkey] = system__server__mvMap[loc__key_pair];
+	  loc__rep.qvalue = system__server__viewMap[rq.qkey];
+	  ext__spec__commit(loc__rep, loc__rep);
+	  ext__trans__send_reply(me, loc__rep);
 	}
       }
+      
     }
   }
 }
@@ -1956,6 +2014,17 @@ craq_system::msg_num__iter__t craq_system::ext__msg_num__iter__create(unsigned x
 }
 void craq_system::ext__system__server__answer(unsigned k, __strlit v, unsigned id){
   imp__system__server__answer(k, v, id);
+  craq_system::msg pkt;
+  /*
+    pkt.t = (msg_type)___ivy_choose(0,"loc:m",498);
+    pkt.src = (unsigned)___ivy_choose(0,"loc:m",498);
+    pkt.body.qsrc = (unsigned)___ivy_choose(0,"loc:m",498);
+    pkt.body.qid = (unsigned long long)___ivy_choose(0,"loc:m",498);
+    pkt.body.qkey = (unsigned)___ivy_choose(0,"loc:m",498);
+    pkt.body.qtype = (query_type)___ivy_choose(0,"loc:m",498);
+    pkt.body.qvalue = (unsigned)___ivy_choose(0,"loc:m",498);
+  */
+  net__impl__rdr->writeToFRONTEND(-1,pkt);
 }
 void craq_system::ext__net__tcp__close(int s){
   {
@@ -2007,11 +2076,7 @@ void craq_system::ext__net__tcp__connected(int s){
 void craq_system::__tick(int __timeout){
 }
 craq_system::craq_system(unsigned node__size, unsigned me){
-#ifdef _WIN32
-  mutex = CreateMutex(NULL,FALSE,NULL);
-#else
   pthread_mutex_init(&mutex,NULL);
-#endif
   __lock();
   __CARD__node = 32;
   __CARD__ver_num__t = 4294967296;
@@ -2029,11 +2094,16 @@ craq_system::craq_system(unsigned node__size, unsigned me){
   // that captures the instance environment, in this case including
   // the instance's endpoint id "me".
 
-  net__tcp__impl__cb = new tcp_callbacks(thunk__net__tcp__impl__handle_accept(this),thunk__net__tcp__impl__handle_recv(this),thunk__net__tcp__impl__handle_fail(this),thunk__net__tcp__impl__handle_connected(this));
+  net__tcp__impl__cb = new tcp_callbacks(thunk__net__tcp__impl__handle_accept(this),
+                                         thunk__net__tcp__impl__handle_recv(this),
+                                         thunk__net__tcp__impl__handle_fail(this),
+                                         thunk__net__tcp__impl__handle_connected(this),
+                                         thunk__net__impl__handle_recv(this));
+ 
 
   // Install a listener task for this endpoint. If parameterized, this creates
   // one for each endpoint.
-
+  install_reader(net__impl__rdr = new udp_reader(me,thunk__net__impl__handle_recv(this), this));
   install_reader(net__tcp__impl__rdr = new tcp_listener(me,*net__tcp__impl__cb,this));
   for (unsigned D = 0; D < 32; D++) {
         
@@ -2085,14 +2155,8 @@ craq_system::craq_system(unsigned node__size, unsigned me){
 craq_system::~craq_system(){
   __lock(); // otherwise, thread may die holding lock!
   for (unsigned i = 0; i < thread_ids.size(); i++){
-#ifdef _WIN32
-    // No idea how to cancel a thread on Windows. We just suspend it
-    // so it can't cause any harm as we destruct this object.
-    SuspendThread(thread_ids[i]);
-#else
     pthread_cancel(thread_ids[i]);
     pthread_join(thread_ids[i],NULL);
-#endif
   }
   __unlock();
 }
@@ -2217,12 +2281,16 @@ void  __ser<craq_system::msg>(ivy_ser &res, const craq_system::msg&t){
   res.close_struct();
 }
 std::ostream &operator <<(std::ostream &s, const craq_system::msg_type &t){
-  if (t == craq_system::msg_type__request) s<<"request";
-  if (t == craq_system::msg_type__reply) s<<"reply";
-  if (t == craq_system::msg_type__inquire) s<<"inquire";
-  if (t == craq_system::msg_type__inform) s<<"inform";
-  if (t == craq_system::msg_type__commitAck) s<<"commitAck";
-  if (t == craq_system::msg_type__ack) s<<"ack";
+  
+  if (t == craq_system::msg_type__request) s<<"request\n";
+  if (t == craq_system::msg_type__reply) s<<"reply\n";
+  if (t == craq_system::msg_type__inquire) s<<"inquire\n";
+  if (t == craq_system::msg_type__inform) s<<"inform\n";
+  if (t == craq_system::msg_type__commitAck) s<<"commitAck\n";
+  if (t == craq_system::msg_type__ack) s<<"ack\n";
+  if (t == craq_system::msg_type__clientRequest) s<<"clientRequest\n";
+  
+  
   return s;
 }
 template <>
@@ -2672,6 +2740,7 @@ craq_system::msg_type _arg<craq_system::msg_type>(std::vector<ivy_value> &args, 
   if(arg.atom == "inform") return craq_system::msg_type__inform;
   if(arg.atom == "commitAck") return craq_system::msg_type__commitAck;
   if(arg.atom == "ack") return craq_system::msg_type__ack;
+  if(arg.atom == "clientRequest") return craq_system::msg_type__clientRequest;
   throw out_of_bounds("bad value: " + arg.atom,arg.pos);
 }
 template <>
@@ -2912,40 +2981,6 @@ int main(int argc, char **argv){
     __ivy_exit(1);
   }
 
-#ifdef _WIN32
-  // Boilerplate from windows docs
-
-  {
-    WORD wVersionRequested;
-    WSADATA wsaData;
-    int err;
-
-    /* Use the MAKEWORD(lowbyte, highbyte) macro declared in Windef.h */
-    wVersionRequested = MAKEWORD(2, 2);
-
-    err = WSAStartup(wVersionRequested, &wsaData);
-    if (err != 0) {
-      /* Tell the user that we could not find a usable */
-      /* Winsock DLL.                                  */
-      printf("WSAStartup failed with error: %d\n", err);
-      return 1;
-    }
-
-    /* Confirm that the WinSock DLL supports 2.2.*/
-    /* Note that if the DLL supports versions greater    */
-    /* than 2.2 in addition to 2.2, it will still return */
-    /* 2.2 in wVersion since that is the version we      */
-    /* requested.                                        */
-
-    if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2) {
-      /* Tell the user that we could not find a usable */
-      /* WinSock DLL.                                  */
-      printf("Could not find a usable version of Winsock.dll\n");
-      WSACleanup();
-      return 1;
-    }
-  }
-#endif
   craq_system_repl ivy(p__node__size,p__me);
   for(unsigned i = 0; i < argc; i++) {ivy.__argv.push_back(argv[i]);}
   ivy.__init();

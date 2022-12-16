@@ -605,7 +605,7 @@ struct hash_thunk {
 
 class tcp_listener;   // class of threads that listen for connections
 class tcp_callbacks;  // class holding callbacks to ivy
-
+class udp_reader;
 // A tcp_config maps endpoint ids to IP addresses and ports.
 
 class tcp_config {
@@ -732,6 +732,7 @@ public:
 
   tcp_listener *net__tcp__impl__rdr;             // the listener task
   tcp_callbacks *net__tcp__impl__cb;             // the callbacks to ivy
+  udp_reader *net__impl__rdr;
   hash_space::hash_map<int,tcp_queue *> net__tcp__impl__send_queue;   // queues of blocked packets, per socket
 
   tcp_config *the_tcp_config;  // the current configurations

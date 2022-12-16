@@ -132,7 +132,6 @@ isolate system = {
         }
 
 	implement trans.handle_inform(rq: query) {
-	    assume dBitMap(rq.qkey) = true;
 	    var rep : query;
 	    rep.qkey := rq.qkey;
 	    rep.qtype := rq.qtype;
