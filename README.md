@@ -1,4 +1,4 @@
-# VeriCRAQ
+# CRAQ-Verified
 Verification of the CRAQ protocol in Ivy, following the Sift methodology (Ma et. al, usenix ATC '22). Final project for COS516 Fall 22. 
 
 Dependencies: A working installation of Ivy version 1.8.24, GNU G++
